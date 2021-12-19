@@ -1,4 +1,4 @@
-![Image text](http://github.com/erwann-rch/Blitz/img/banner.jpg)
+![Image text](http://github.com/erwann-rch/Blitz/banner.jpg)
 
 # Blitz
 
