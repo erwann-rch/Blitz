@@ -35,4 +35,4 @@ $ python3 main.py
 
 ### Licence
 
-This projet is under ```GNU Licence V.3``` , The General blablalba
+This projet is under ```GNU General Public License v3.0```
