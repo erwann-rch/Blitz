@@ -1,5 +1,7 @@
 ![Image text](http://https://github.com/erwann-rch/Blitz/main/banner.jpg)
 
+# /!\ WORKING ON PROGRESS ...
+
 # Blitz
 
 A Python-based chess program containing a local multiplayer system, an AI versus-mode, accurate moves and many other features.
