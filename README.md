@@ -1,4 +1,4 @@
-![Image text](http://github.com/erwann-rch/Blitz/banner.jpg)
+![Image text](http://github.com/erwann-rch/Blitz/img/banner.jpg)
 
 # Blitz
 
@@ -22,7 +22,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming.
 ***
 A list of technologies used within the project:
 * [Python 3.X](https://www.python.org) 
-* [Tkinter](https://docs.python.org/3/library/tkinter.html)
+* [Pygame](https://www.pygame.org/docs/)
 
 ## Installation
 ***
