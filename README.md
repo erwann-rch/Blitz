@@ -29,8 +29,8 @@ A list of technologies used within the project:
 A little intro about the installation. 
 ```
 $ git clone https://github.com/erwann-rch/Blitz/
-$ cd ../Blitz
-$ python3 main.py
+$ cd ../Blitz/codes
+$ python3 Main.py
 ```
 
 ### Licence
