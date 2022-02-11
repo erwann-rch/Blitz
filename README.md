@@ -1,4 +1,4 @@
-[Image text](https://github.com/erwann-rch/Blitz/blob/main/banner.jpg)
+![Banner](https://github.com/erwann-rch/Blitz/blob/main/banner.jpg)
 
 # /!\ WORKING ON PROGRESS ...
 
