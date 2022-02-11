@@ -1,4 +1,4 @@
-![Image text](http://https://github.com/erwann-rch/Blitz/main/banner.jpg)
+![Image text](https://github.com/erwann-rch/Blitz/main/banner.jpg)
 
 # /!\ WORKING ON PROGRESS ...
 
@@ -11,15 +11,25 @@ A Python-based chess program containing a local multiplayer system, an AI versus
 ## Table of Contents
 
 1. [General Info](#general-info)
-2. [Technologies](#technologies)
-3. [Installation](#installation)
-4. [Licence](#licence)
+2. [TODO-LIST](#todo-list)
+3. [Technologies](#technologies)
+4. [Installation](#installation)
+5. [Licence](#licence)
 
 ### General Info
 ***
 This program is a python project that I made in order to prove what I can do in terms of programming.
-Moreover, I enjoyed merging two of my passions: chess and programming.
+Moreover, I enjoyed merging two of my passions: chess and programming. Hope you will find it at your taste.
 
+## TODO-LIST 
+***
+- [ ] Make/Undo the moves
+- [ ] AI
+- [ ] Flip the board on each turn (only if mutliplayer)
+- [ ] Multiplayer
+- [ ] Menu of selecting which mode
+- [ ] Special rules in chess (castling / en-passant / pawn promotion)
+ 
 ## Technologies
 ***
 A list of technologies used within the project:
@@ -28,7 +38,7 @@ A list of technologies used within the project:
 
 ## Installation
 ***
-A little intro about the installation. 
+A little help about the installation. 
 ```
 $ git clone https://github.com/erwann-rch/Blitz/
 $ cd ../Blitz/codes
