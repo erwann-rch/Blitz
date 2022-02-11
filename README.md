@@ -4,7 +4,7 @@
 
 # Blitz
 
-A Python-based chess program containing a local multiplayer system, an AI versus-mode, accurate moves and many other features.
+A Python-based chess program containing a local multiplayer system, an AI-versus mode, accurate moves and many other features.
 
 [![forthebadge](http://forthebadge.com/images/badges/built-with-love.svg)](http://forthebadge.com)  [![forthebadge](http://forthebadge.com/images/badges/powered-by-electricity.svg)](http://forthebadge.com)
 
