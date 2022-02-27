@@ -12,9 +12,10 @@ A Python-based chess program containing a local multiplayer system, an AI-versus
 
 1. [General Info](#general-info)
 2. [TODO-LIST](#todo-list)
-3. [Technologies](#technologies)
-4. [Installation](#installation)
-5. [Licence](#licence)
+3. [Contributors](#contibutors)
+4. [Technologies](#technologies)
+5. [Installation](#installation)
+6. [Licence](#licence)
 
 ### General Info
 ***
@@ -23,13 +24,18 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 
 ## TODO-LIST 
 ***
+- [ ] Fix the ValidMoves bug
 - [ ] Make/Undo the moves
 - [ ] AI
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Multiplayer
 - [ ] Menu of selecting which mode
 - [ ] Special rules in chess (castling / en-passant / pawn promotion)
- 
+
+## Contributors
+***
+If you are intrested in the project and want to help me I will add you to the list of contirbutors, you just need to send me a message at richier.erwann@gmail.com
+
 ## Technologies
 ***
 A list of technologies used within the project:
