@@ -1,3 +1,4 @@
+#!/bin/env python
 # Main file -- Handling user inputs & GameState class
 
 # ------------------------------ | Imports | ------------------------------ #
