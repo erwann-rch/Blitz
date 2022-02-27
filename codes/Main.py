@@ -61,18 +61,23 @@ def Main():
                     playerClicks.append(sqSelected)
                 if len(playerClicks) == 2:
                     move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    if move in validMoves:
-                        print("if")
-                        gs.MakeMove(move)
-                        moveMade = True
-                        sqSelected = ()
-                        playerClicks = []
-                    else:
-                        playerClicks = [sqSelected]
                     print(move.GetChessNot())
-                if moveMade:
-                    validMoves = gs.GetValidMoves()
-                    moveMade = False
+                    gs.MakeMove(move)
+                    sqSelected = ()
+                    playerClicks = []
+                    '''
+                    for i in range(len(validMoves)):
+                        if move == validMoves[i]:
+                            gs.MakeMove(move)
+                            moveMade = True
+                            sqSelected = ()
+                            playerClicks = []
+                        else:
+                            playerClicks = [sqSelected]
+                        print(move.GetChessNot())
+                    if not moveMade:
+                        playerClicks=[sqSelected]
+                    '''
 
             # Keyboard handler
             elif event.type == pg.KEYDOWN:

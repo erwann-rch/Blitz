@@ -49,7 +49,7 @@ class GameState():
                 turn = self.board[r][c][0]
                 if (turn == "w" and self.whiteTurn) or (turn == "b" and not self.whiteTurn):
                     piece = self.board[r][c][1]
-                    self.RightMovFunc[piece](r, c, self.board)  # call the right function
+                    moves.append(self.RightMovFunc[piece](r, c, self.board))  # call the right function
         return moves
 
     # Identify valid (non special) pawn moves
