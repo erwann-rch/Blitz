@@ -34,7 +34,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 
 ## Contributors
 ***
-If you are intrested in the project and want to help me I will add you to the list of contirbutors, you just need to send me a message at richier.erwann@gmail.com
+If you are intrested in the project and want to help me I will add you to the list of contirbutors, you just need to send me a message with your GitHub pseudo at richier.erwann@gmail.com
 
 ## Technologies
 ***
