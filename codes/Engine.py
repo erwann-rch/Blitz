@@ -1,3 +1,4 @@
+#!/bin/env python
 # Engine class -- Responsible of storing datas & moves log + determining valid moves
 
 class GameState():
