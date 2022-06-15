@@ -23,13 +23,20 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 
 ## TODO-LIST 
 ***
-- [ ] Fix the ValidMoves bug
-- [ ] Make/Undo the moves
-- [ ] AI
-- [ ] Flip the board on each turn (only if mutliplayer)
-- [ ] Multiplayer
-- [ ] Menu of selecting which mode
+
+* Required
 - [ ] Special rules in chess (castling / en-passant / pawn promotion)
+- [ ] 3 identical moves = stalemate
+- [ ] Add proper chess notation
+- [ ] AI
+
+* Unrequired
+- [ ] Drag N Drop 
+- [ ] Menu to select theme (brown/blue/green/gray[default])
+- [ ] Menu of selecting which mode (AI VS Human / Human VS Human)
+- [ ] Local multiplayer 
+- [ ] Flip the board on each turn (only if mutliplayer)
+- [ ] Generate .pgn file
 
 ## Technologies
 ***
