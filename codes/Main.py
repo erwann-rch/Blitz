@@ -1,128 +1,127 @@
-#!/bin/env python
-# Main file -- Handling user inputs & GameState class
+#!/usr/bin/env python3
 
-# ------------------------------ | Imports | ------------------------------ #
+# Main file ~ Handles user input & displays GameState object
+############################# [ IMPORTS ] #############################
 
 import pygame as pg
 import Engine
-import time
 
-# ------------------------------------------------------------------------- #
+############################# [ VARIABLES ] #############################
 
-# ------------------------------ | Variables | ------------------------------ #
-
-w = h = 512  # scale of window
-dim = 8  # number of cases in both Ox and Oy
-sqSize = w // dim  # square size
-fps = 15  # animation
-img = {}  # match name of piece with its img
-
-# --------------------------------------------------------------------------- #
-
-# ------------------------------ | Functions | ------------------------------ #
-
-time.sleep(0.045)
-time.sleep(0.052)
+w = h = 512  # Width  & Height of the board
+d = 8  # Dimension of the board (8*8)
+sqSize = w // d
+fps = 15  # 15fps ==> need no more
+img = {}  # Dict of images
 
 
-# Loading images of the pieces /!\ ONLY ONCE
-def LoadImg():
-    piece = ["wP", "wR", "wN", "wB", "wQ", "wK", "bP", "bR", "bN", "bB", "bQ", "bK"]
-    for p in piece:
-        img[p] = pg.transform.scale(pg.image.load("../images/{}.png".format(p)), (sqSize, sqSize))
+############################# [ FUNCTIONS ] #############################
+
+# Function to load images into the board
+# /!\ EXECUTE ONLY ONCE ==> too much RAM consumption
+def loadImg():
+    pieces = ["bR", "bN", "bB", "bQ", "bK", "bP", "wR", "wN", "wB", "wQ", "wK", "wP"]  # List of every pieces
+    for p in pieces:
+        img[p] = pg.transform.scale(pg.image.load(f"../images/{p}.png"), (
+            sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
 
 
-# Main driver which handle updating and user input
-def Main():
+# --------------------------------------------------
+# Draw function used to draw the complete game
+def draw(screen, gs):
+    drawBoard(screen)
+    drawPieces(screen, gs.board)
+
+
+# --------------------------------------------------
+# Secondary functions used to draw board and pieces ==> separated to be more readable
+def drawBoard(screen):
+    colors = [pg.Color("white"), pg.Color("gray")]  # List of colors used on the board
+    for row in range(d):
+        for col in range(d):
+            color = colors[(row + col) % 2]  # Make alternated color on the board
+            # Draw a rectangle of the right size on the screen in the right color and place
+            pg.draw.rect(screen, color, pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
+            #           screen, color, rectangle object(right x value, right y value,width,height)
+
+
+# --------------------------------------------------
+def drawPieces(screen, board):
+    for row in range(d):
+        for col in range(d):
+            piece = board[row][col]  # Assign a piece for each case
+            if piece != "  ":  # Not empty ones
+                # Overlay img of the piece and the board drew
+                screen.blit(img[piece], pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
+
+
+# --------------------------------------------------
+# Main function
+def run():
+    pg.init()  # Initialize the pygame object
+    screen = pg.display.set_mode((w, h))  # Define the size of the window
+    pg.display.set_caption("Blitz")  # Set the title
+    pg.display.set_icon(pg.image.load('../images/Blitz_logo.png'))  # Set the icon
+    screen.fill(pg.Color("white"))  # Make a white window (easier to see modifications)
+
+    clock = pg.time.Clock()  # Create an object to handles fps
+
+    gs = Engine.GameState()  # Initialize the game
+    loadImg()  # and images
+    validMoves = gs.getValidMoves()  # Get all valid moves
+    moveDone = False  # Flag
+    sqSelected = ()  # (col,row) ==> last click
+    playerClicks = []  # [(c1,r1),(c2,r2)]  ==> used to make a move
     run = True
-    moveMade = False  # Flag variable to avoid too much expensive operations
-    sqSelected = ()  # Last click : (row,col)
-    playerClicks = []  # 2 last clicks [(row1,col1),(row2,col2)]
-    screen = pg.display.set_mode((w, h))  # Initialize a window or screen for display
-    clock = pg.time.Clock()
-    gs = Engine.GameState()
-    validMoves = gs.GetValidMoves()
-    LoadImg()
-
     while run:
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
+        for event in pg.event.get():  # Handle events of the game
+            if event.type == pg.QUIT:  # click on the red cross
+                pg.quit()
                 run = False
 
             # Mouse handler
-            elif event.type == pg.MOUSEBUTTONDOWN:
-                mouseLoc = pg.mouse.get_pos()  # Get the pos (x,y) of the mouse
-                col = mouseLoc[0] // sqSize
-                row = mouseLoc[1] // sqSize
-                if sqSelected == (row, col):  # Select and deselect the piece
+            elif event.type == pg.MOUSEBUTTONDOWN:  # mouse click
+                loc = pg.mouse.get_pos()  # (x,y) loc of the mouse
+                col = loc[0] // sqSize  # right case clicked
+                row = loc[1] // sqSize
+                color = "w" if gs.whiteTurn else "b"
+                if sqSelected == (row, col):  # Unselect the current case if double click
                     sqSelected = ()
                     playerClicks = []
                 else:
-                    sqSelected = (row, col)
-                    playerClicks.append(sqSelected)
-                if len(playerClicks) == 2:
-                    move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    print(move.GetChessNot())
-                    gs.MakeMove(move)
-                    sqSelected = ()
-                    playerClicks = []
-                    '''
-                    for i in range(len(validMoves)):
-                        if move == validMoves[i]:
-                            gs.MakeMove(move)
-                            moveMade = True
-                            sqSelected = ()
-                            playerClicks = []
-                        else:
-                            playerClicks = [sqSelected]
-                        print(move.GetChessNot())
-                    if not moveMade:
-                        playerClicks=[sqSelected]
-                    '''
+                    sqSelected = (row, col)  # Keep tracks of the click
+                    playerClicks.append(sqSelected)  # Taking it as a valid click
 
-            # Keyboard handler
+                if len(playerClicks) == 2:  # 2 clicks ==> move a piece from a case to an other one
+                    move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
+                    if move in validMoves:
+                        gs.makeMove(move)  # Make the move
+                        print(move.getChessNot())
+                        moveDone = True
+                        # Clear the click record of the turn
+                        sqSelected = ()
+                        playerClicks = []
+                    else:  # Fix the click wasting
+                        if color in gs.board[playerClicks[1][0]][playerClicks[1][1]]:  # Check if last clicked square contains player color piece
+                            sqSelected = (playerClicks[1])  # Put the sqSelected to the last click
+                            playerClicks = [sqSelected]  # Pop the first click
+
+            # Key handler
             elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_u:  # Undo when U key is pressed
-                    gs.UndoMove()
-                    moveMade = True
+                if event.key == pg.K_u:  # Undo on "U" key press
+                    gs.undoMove()
+                    moveDone = True
 
-        Draw(screen, gs)
-        clock.tick(fps)
-        pg.display.flip()  # Update the full display Surface to the screen
+        if moveDone:  # Generate a new set of valid moves only if a move is made
+            validMoves = gs.getValidMoves()
+            print(len(validMoves))
+            moveDone = False  # Reset the flag
 
-
-# Draw all the needed
-def Draw(screen, gs):
-    DrawBoard(screen)
-    DrawPiece(screen, gs.board)
-
-
-# Draw the board with alternated colors
-def DrawBoard(screen):
-    colors = [pg.Color("white"), pg.Color("gray")]
-    for row in range(dim):
-        for col in range(dim):
-            color = colors[((row + col) % 2)]
-            pg.draw.rect(screen, color, pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
+        draw(screen, gs)  # Draw the whole game
+        clock.tick(fps)  # Makes the clock ticking at fps frames rate
+        pg.display.update()  # Update the board at every tick
 
 
-# Draw pieces in right cases
-def DrawPiece(screen, board):
-    for row in range(dim):
-        for col in range(dim):
-            piece = board[row][col]
-            if piece != "  ":
-                screen.blit(img[piece],
-                            pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))  # draw one image onto another
+############################# [ LAUNCH ] #############################
 
-
-# --------------------------------------------------------------------------- #
-
-# ------------------------------ | Launch | ------------------------------ #
-
-pg.init()  # Initialize the window
-pg.display.set_caption('Blitz')  # Put a title on the window
-
-Main()
-
-# ------------------------------------------------------------------------ #
+run()
