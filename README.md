@@ -25,6 +25,12 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 ***
 
 * Required
+- [x] Drawn board / pieces / allow piece move (anywhere)
+- [x] Turns
+- [x] Make / Undo move
+- [x] All possible moves
+- [x] Checkmate / Stalemate
+- [x] Legal moves
 - [ ] Special rules in chess (castling / en-passant / pawn promotion)
 - [ ] 3 identical moves = stalemate
 - [ ] Add proper chess notation
