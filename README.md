@@ -41,6 +41,7 @@ A list of technologies used within the project:
 ***
 A little help about the installation. 
 ```
+$ pip install pygame
 $ git clone https://github.com/erwann-rch/Blitz/
 $ cd ../Blitz/codes
 $ python3 Main.py
