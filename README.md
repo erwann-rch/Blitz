@@ -32,6 +32,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Checkmate / Stalemate
 - [x] Legal moves
 - [ ] Special rules in chess (castling / en-passant / pawn promotion)
+- [ ] Make the pawn promotion choice into the UI
 - [ ] 3 identical moves = stalemate
 - [ ] Add proper chess notation
 - [ ] AI
@@ -39,7 +40,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 * Unrequired
 - [ ] Drag N Drop 
 - [ ] Menu to select theme (brown/blue/green/gray[default])
-- [ ] Menu of selecting which mode (AI VS Human / Human VS Human)
+- [ ] Menu of selecting which mode (AI VS Human[default] / Human VS Human)
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
