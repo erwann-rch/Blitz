@@ -31,7 +31,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] All possible moves
 - [x] Checkmate / Stalemate
 - [x] Legal moves
-- [ ] Special rules in chess (castling / en-passant / pawn promotion)
+- [x] Special rules in chess (castling / en-passant / pawn promotion)
 - [ ] Make the pawn promotion choice into the UI
 - [ ] 3 identical moves = stalemate
 - [ ] Add proper chess notation
