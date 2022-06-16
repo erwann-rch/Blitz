@@ -114,7 +114,7 @@ def run():
 
         if moveDone:  # Generate a new set of valid moves only if a move is made
             validMoves = gs.getValidMoves()
-            print(len(validMoves))
+            #print(len(validMoves))
             moveDone = False  # Reset the flag
 
         draw(screen, gs)  # Draw the whole game
