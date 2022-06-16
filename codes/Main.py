@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Main file ~ Handles user input & displays GameState object
 ############################# [ IMPORTS ] #############################
 
@@ -22,8 +21,7 @@ img = {}  # Dict of images
 def loadImg():
     pieces = ["bR", "bN", "bB", "bQ", "bK", "bP", "wR", "wN", "wB", "wQ", "wK", "wP"]  # List of every pieces
     for p in pieces:
-        img[p] = pg.transform.scale(pg.image.load(f"../images/{p}.png"), (
-            sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
+        img[p] = pg.transform.scale(pg.image.load(f"../images/{p}.png"), (sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
 
 
 # --------------------------------------------------
@@ -94,17 +92,19 @@ def run():
 
                 if len(playerClicks) == 2:  # 2 clicks ==> move a piece from a case to an other one
                     move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
-                    if move in validMoves:
-                        gs.makeMove(move)  # Make the move
-                        print(move.getChessNot())
-                        moveDone = True
-                        # Clear the click record of the turn
-                        sqSelected = ()
-                        playerClicks = []
-                    else:  # Fix the click wasting
-                        if color in gs.board[playerClicks[1][0]][playerClicks[1][1]]:  # Check if last clicked square contains player color piece
-                            sqSelected = (playerClicks[1])  # Put the sqSelected to the last click
-                            playerClicks = [sqSelected]  # Pop the first click
+                    for i in range(len(validMoves)):
+                        if move == validMoves[i]:
+                            # Choice of the pawn prom after the move done
+                            gs.makeMove(validMoves[i])  # Make the move
+                            print(validMoves[i].getChessNot())
+                            moveDone = True
+
+                            # Clear the click record of the turn
+                            sqSelected = ()
+                            playerClicks = []
+
+                    if not moveDone:  # Fix the click wasting
+                        playerClicks = [sqSelected]  # Pop the first click and only keep the last one
 
             # Key handler
             elif event.type == pg.KEYDOWN:

@@ -28,9 +28,10 @@ class GameState():
         self.bKLoc = (0, 4)
 
         # Defines variables to get list of legal moves
-        self.pinnedPieces = []
-        self.currentChecks = []
-        self.inCheck = False
+        self.pinnedPieces = []  # List of pinned piece for each move
+        self.currentChecks = []  # List of threatening pieces for each move
+        self.inCheck = False  # Flag to know if there is a check
+        self.epPossible = ()  # Coords of the possible en-passant
 
     # Function to make moves and captures
     def makeMove(self, move):
@@ -38,11 +39,31 @@ class GameState():
         self.board[move.endRow][move.endCol] = move.pieceMoved  # Move the piece to its ending square
         self.moveLog.append(move)
         self.whiteTurn = not self.whiteTurn  # Switch turn
+
         # Record king movements
         if move.pieceMoved == "wK":
             self.wKLoc = (move.endRow, move.endCol)
         elif move.pieceMoved == "bK":
             self.bKLoc = (move.endRow, move.endCol)
+
+        # Handling pawn promotion
+        if move.isProm:
+            promChoice = str(input("Promote to Q, R, B, or N:")).upper()  # Handle this into UI later
+            while not promChoice in ["Q","R","B","N"]:
+                if not promChoice in ["Q","R","B","N"]:
+                    promChoice = str(input("Please choose Q, R, B, or N to promote:")).upper()
+                else:
+                    break
+            self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promChoice  # Changing the piece type into choice
+
+        # Handling en-passant
+        if move.isEp:
+            self.board[move.startRow][move.endCol] = "  "  # Capturing the piece at startRow but enCol
+
+        if move.pieceMoved[1] == "P" and abs(move.startRow - move.endRow) == 2:  # Only if piece moved is a pawn and the absolute value of the difference between start and end Row is 2
+            self.epPossible = ((move.startRow + move.endRow)/2,move.endCol)  # The free square is between start and endRow
+        else:
+            self.epPossible = ()  # Reset if any other move is made
 
     # Function to undo the last move
     def undoMove(self):
@@ -56,6 +77,16 @@ class GameState():
                 self.wKLoc = (move.startRow, move.startCol)
             elif move.pieceMoved == "bK":
                 self.bKLoc = (move.startRow, move.startCol)
+
+            # Undo ep
+            if move.isEp:
+                self.board[move.endRow][move.endCol] = "  "  # Leave a blank in the square behind the piece captured
+                self.board[move.startRow][move.endCol] = move.pieceCaptured  # Put back the captured pawn
+                self.epPossible = (move.endRow, move.endCol)  # Reset the ep possible move'
+
+            # Undo the pawn double dash
+            if move.pieceMoved[1] == "P" and abs(move.startRow - move.endRow) == 2:
+                self.epPossible = ()
 
     # Function to get all possible moves
     def getAvailableMoves(self):
@@ -71,6 +102,7 @@ class GameState():
 
     # Function to get all legal moves (without open checks)
     def getValidMoves(self):
+        tmpEp = self.epPossible  # Save the epPossible to avoid bugs from makemove
         validMovesList = []
         self.inCheck, self.pinnedPieces, self.currentChecks = self.getPinsAndChecks()
 
@@ -113,6 +145,8 @@ class GameState():
                 print("stalemate")
                 self.stalemate = True
                 return []
+
+        self.epPossible = tmpEp  # Reset it
         return validMovesList
 
     # Function to get pawn available moves
@@ -136,9 +170,16 @@ class GameState():
             if col > 0 and self.board[row - 1][col - 1][0] == "b":  # Left capture on enemy piece
                 if not isPinned or pinDirr == (-1, -1):  # No blocking pin (dirr = up-left)
                     moveList.append(Move((row, col), (row - 1, col - 1), self.board))
-            elif col < 7 and self.board[row - 1][col + 1][0] == "b":  # Right capture
+            elif col > 0 and self.board[row - 1][col - 1] == "  ":
+                if (row - 1, col - 1) == self.epPossible:  # Add the en-passant to the list of valid moves
+                    moveList.append(Move((row, col), (row - 1, col - 1), self.board, isEp=True))
+
+            if col < 7 and self.board[row - 1][col + 1][0] == "b":  # Right capture
                 if not isPinned or pinDirr == (-1, 1):  # No blocking pinned (dirr = up-right)
                     moveList.append(Move((row, col), (row - 1, col + 1), self.board))
+            elif col < 7 and self.board[row - 1][col + 1] == "  ":
+                if (row - 1, col + 1) == self.epPossible:  # Add the en-passant to the list of valid moves
+                    moveList.append(Move((row, col), (row - 1, col + 1), self.board, isEp=True))
 
         else:  # Same but with back side values
             if self.board[row + 1][col] == "  ":
@@ -150,9 +191,17 @@ class GameState():
             if col > 0 and self.board[row + 1][col - 1][0] == "w":
                 if not isPinned or pinDirr == (1, -1):
                     moveList.append(Move((row, col), (row + 1, col - 1), self.board))
-            elif col < 7 and self.board[row + 1][col + 1][0] == "w":
+            elif col > 0 and self.board[row + 1][col - 1] == "  ":
+                if (row + 1, col - 1) == self.epPossible:
+                    moveList.append(Move((row, col), (row + 1, col - 1), self.board, isEp=True))
+
+            if col < 7 and self.board[row + 1][col + 1][0] == "w":
                 if not isPinned or pinDirr == (1, 1):
                     moveList.append(Move((row, col), (row + 1, col + 1), self.board))
+            elif col < 7 and self.board[row + 1][col + 1] == "  ":
+                if (row + 1, col + 1) == self.epPossible:
+                    moveList.append(Move((row, col), (row + 1, col + 1), self.board, isEp=True))
+
 
     # Function to get rook available moves
     def getRookMoves(self, row, col, moveList):
@@ -175,7 +224,7 @@ class GameState():
                 endRow = row + dirr[0] * i
                 endCol = col + dirr[1] * i
                 if 0 <= endRow < 8 and 0 <= endCol < 8:  # On the board
-                    if not isPinned or pinDirr == dirr or pinDirr == (-dirr[0],-dirr[1]):  # Direction or its opposite to allow moves to  and away of the pin
+                    if not isPinned or pinDirr == dirr or pinDirr == (-dirr[0],-dirr[1]):  # Direction or its opposite to allow moves to and away of the pin
                         endPiece = self.board[endRow][endCol]  # Get the end piece to know if the move is valid or not
                         if endPiece == "  ":  # valid move : empty space
                             moveList.append(Move((row, col), (endRow, endCol), self.board))
@@ -372,13 +421,21 @@ class Move():
     # .items() ==> [(k,v),(k,v),...]
     colsToFiles = {v: k for k, v in filesToCols.items()}
 
-    def __init__(self, startSq, endSq, board):
+    def __init__(self, startSq, endSq, board, isEp=False):
         self.startRow, self.startCol = startSq  # startSq = (row,col)
         self.endRow, self.endCol = endSq  # endSq = (row,col)
         self.pieceMoved = board[self.startRow][self.startCol]  # Piece that initialize the move
         self.piedCaptured = board[self.endRow][self.endCol]  # Piece that end the move
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol  # Get a moveID with startSq and endSq
         # print(self.moveID)
+
+        # Flags for pawn promotion
+        self.isProm = self.isPromoting()  # Flag to know if the current move is a pawn prom
+        #self.promChoice = promChoice => put this into arg
+
+        # Flags for en-passant moves
+        self.isEp = isEp  # Flag to know if the current move is an ep move
+        self.pieceCaptured = "bP" if self.pieceMoved == "wP" else "wP"  # What piece is captured on en passant
 
     # Overriding the equals method to be used with object
     def __eq__(self, other):
@@ -395,3 +452,18 @@ class Move():
     def getRankFile(self, row, col):
         # Get the chess notation of the square (i.e : "e4")
         return self.colsToFiles[col] + self.rowsToRanks[row]
+
+    # Function to determine if the current move is a pawn promotion
+    def isPromoting(self):
+        if (self.pieceMoved == "wP" and self.endRow == 0) or (self.pieceMoved == "bP" and self.endRow == 7):
+            return True
+        else:
+            return False
+    """
+    # Function to determine is a ep move
+    def isEnPassant(self):
+        if self.pieceMoved[1] == "P" and self.isEp:
+            return True
+        else:
+            return False
+    """
