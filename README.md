@@ -1,6 +1,6 @@
 ![Banner](https://github.com/erwann-rch/Blitz/blob/main/banner.jpg)
 
-# /!\ WORKING ON PROGRESS ...
+# /!\ WORK IN PROGRESS ...
 
 # Blitz
 
