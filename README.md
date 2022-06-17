@@ -32,14 +32,16 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Checkmate / Stalemate
 - [x] Legal moves
 - [x] Special rules in chess (castling / en-passant / pawn promotion)
-- [ ] Make the pawn promotion choice into the UI
 - [ ] 3 identical moves = stalemate
 - [ ] Add proper chess notation
+- [x] Highlight of selected squares / allowed moves / last opponent move
 - [ ] AI
 
 * Unrequired
 - [ ] Highlight circles and not square
+- [ ] Make the pawn promotion choice into the UI
 - [ ] Drag N Drop 
+- [ ] Add a clock
 - [ ] Menu to select theme (brown/blue/green/gray[default])
 - [ ] Menu of selecting which mode (AI VS Human[default] / Human VS Human)
 - [ ] Menu to select if highlight[default] or not
