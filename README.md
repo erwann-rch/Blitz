@@ -38,9 +38,11 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] AI
 
 * Unrequired
+- [ ] Highlight circles and not square
 - [ ] Drag N Drop 
 - [ ] Menu to select theme (brown/blue/green/gray[default])
 - [ ] Menu of selecting which mode (AI VS Human[default] / Human VS Human)
+- [ ] Menu to select if highlight[default] or not
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
