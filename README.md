@@ -42,9 +42,10 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Make the pawn promotion choice into the UI
 - [ ] Drag N Drop 
 - [ ] Add a clock
-- [ ] Menu to select theme (brown/blue/green/gray[default])
-- [ ] Menu of selecting which mode (AI VS Human[default] / Human VS Human)
-- [ ] Menu to select if highlight[default] or not
+- [ ] Menu of preferences :
+  - [ ] Select theme (brown/blue/green/gray[default])
+  - [ ] Select which mode (AI VS Human[default] / Human VS Human)
+  - [ ] Select if highlight moves[default] or not
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
