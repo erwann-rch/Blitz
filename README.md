@@ -42,6 +42,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Make the pawn promotion choice into the UI
 - [ ] Drag N Drop 
 - [ ] Add a clock
+- [ ] Add proper end game text
 - [ ] Menu of preferences :
   - [ ] Select theme (brown/blue/green/gray[default])
   - [ ] Select which mode (AI VS Human[default] / Human VS Human)
