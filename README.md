@@ -72,7 +72,7 @@ $ python3 Main.py
 ## Usage
 ***
 - Hit ```U``` to ```undo``` a move
-- Hit ```Esc``` to ```reset``` a move
+- Hit ```Esc``` to ```reset``` the game
 
 ### Licence
 
