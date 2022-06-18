@@ -47,6 +47,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Menu of preferences :
   - [ ] Select theme (brown/blue/green/gray[default])
   - [ ] Select which mode (AI VS Human[default] / Human VS Human)
+    - [ ] If AI mode selected => choose what side to play (white[deault] / black / random)
   - [ ] Select if highlight moves[default] or not
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
