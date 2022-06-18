@@ -40,10 +40,10 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 
 * Unrequired
 - [ ] Highlight circles and not square
-- [ ] Make the pawn promotion choice into the UI
 - [ ] Drag N Drop 
 - [ ] Add a clock
-- [ ] Add proper end game text
+- [ ] Add choice for the pawn promotion
+- [ ] Add prettier end game text
 - [ ] Menu of preferences :
   - [ ] Select theme (brown/blue/green/gray[default])
   - [ ] Select which mode (AI VS Human[default] / Human VS Human)
