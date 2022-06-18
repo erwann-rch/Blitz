@@ -69,6 +69,11 @@ $ cd ../Blitz/codes
 $ python3 Main.py
 ```
 
+## Usage
+***
+- Hit ```U``` to ```undo``` a move
+- Hit ```Esc``` to ```reset``` a move
+
 ### Licence
 
 This projet is under ```GPU General Public License v3.0```
