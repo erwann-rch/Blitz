@@ -33,7 +33,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Legal moves
 - [x] Special rules in chess (castling / en-passant / pawn promotion)
 - [x] 3 identical moves = stalemate
-- [ ] Only kings left = stalemate
+- [x] Only kings left = stalemate
 - [ ] Add proper chess notation
 - [x] Highlight of selected squares / allowed moves / last opponent move
 - [ ] AI
