@@ -36,7 +36,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Only kings left = stalemate
 - [x] Add proper chess notation
 - [x] Highlight of selected squares / allowed moves / last opponent move
-- [ ] AI
+- [x] AI
 
 * Unrequired
 - [ ] Highlight circles and not square
