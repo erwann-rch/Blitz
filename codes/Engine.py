@@ -5,19 +5,9 @@
 class GameState():
 
     def __init__(self):
-        self.board = [
-            ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-            ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
-            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
-        ]
         # self.board = [
         #     ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-        #     ["bP", "wP", "bP", "bP", "bP", "bP", "bP", "bP"],
+        #     ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
         #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
         #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
         #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
@@ -25,6 +15,16 @@ class GameState():
         #     ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
         #     ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         # ]
+        self.board = [
+            ["bR", "  ", "  ", "  ", "bK", "  ", "  ", "bR"],
+            ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+            ["wP", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+            ["wR", "  ", "  ", "  ", "wK", "  ", "  ", "wR"]
+        ]
         self.whiteTurn = True  # Define the turn
         self.moveLog = []  # Define the list of played moves
         self.pieceMoves = {"P": self.getPawnMoves, "R": self.getRookMoves, "N": self.getKnightMoves,
@@ -43,7 +43,7 @@ class GameState():
         self.currentChecks = []  # List of threatening pieces for each move
         self.inCheck = False  # Flag to know if there is a check
         self.epPossible = ()  # Coords of the possible en-passant
-        self.epLog = [self.epPossible]
+        self.epLog = []
 
         # Keep track of castling variables
         self.currentCastles = CastleRights(True, True, True, True)  # All the castles are allowed in starting game
@@ -64,15 +64,16 @@ class GameState():
 
         # Handling pawn promotion
         if move.isProm:
-            if not isAI:
-                promChoice = str(input("Promote to Q, R, B, or N:")).upper()  # Handle this into UI later
-                while promChoice not in ["Q", "R", "B", "N"]:
-                    if promChoice not in ["Q", "R", "B", "N"]:
-                        promChoice = str(input("Please choose Q, R, B, or N to promote:")).upper()
-                    else:
-                        break
-            else:  # If AI => promotion = Q
+            if isAI:  # If AI => promotion = Q
                 promChoice = "Q"
+            else:
+                promChoice = "Q"
+                # promChoice = str(input("Promote to Q, R, B, or N:")).upper()  # Handle this into UI later
+                # while promChoice not in ["Q", "R", "B", "N"]:
+                #     if promChoice not in ["Q", "R", "B", "N"]:
+                #         promChoice = str(input("Please choose Q, R, B, or N to promote:")).upper()
+                #     else:
+                #         break
             self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promChoice  # Changing the piece type into choice
 
         # Handling en-passant
@@ -81,6 +82,7 @@ class GameState():
 
         if move.pieceMoved[1] == "P" and abs(move.startRow - move.endRow) == 2:  # Only if piece moved is a pawn and the absolute value of the difference between start and end Row is 2
             self.epPossible = ((move.startRow + move.endRow)/2, move.endCol)  # The free square is between start and endRow
+            self.epLog.append(self.epPossible)
         else:
             self.epPossible = ()  # Reset if any other move is made
 
@@ -291,7 +293,6 @@ class GameState():
             if self.pinnedPieces[i][0] == row and self.pinnedPieces[i][1] == col:
                 isPinned = True
                 pinDirr = (self.pinnedPieces[i][2][0], self.pinnedPieces[i][2][1])
-                self.pinnedPieces.remove(self.pinnedPieces[i])
                 if self.board[row][col][1] != "Q":  # Don't remove if it's a queen ==> queen generate both rook and bishop moves
                     self.pinnedPieces.remove(self.pinnedPieces[i])
                 break

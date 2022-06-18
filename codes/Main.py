@@ -244,7 +244,7 @@ def run():
             drawText(screen, "Stalemate ! Draw : 1/2 - 1/2")
         clock.tick(fps)  # Makes the clock ticking at fps frames rate
         pg.display.update()  # Update the board at every tick
-        #time.sleep(1)
+        time.sleep(1)
     pg.quit()
 
 ############################# [ LAUNCH ] #############################
