@@ -42,12 +42,19 @@ class GameState():
         self.pinnedPieces = []  # List of pinned piece for each move
         self.currentChecks = []  # List of threatening pieces for each move
         self.inCheck = False  # Flag to know if there is a check
+
+        # Keep track of en-passant variables
         self.epPossible = ()  # Coords of the possible en-passant
         self.epLog = []
 
         # Keep track of castling variables
         self.currentCastles = CastleRights(True, True, True, True)  # All the castles are allowed in starting game
         self.castlesLog = [self.currentCastles]
+
+        # Variables to improve AI algorithm
+        # self.protects=[][]  # Piece can't go in a square because there is already an ally piece
+        # self.threats=[][]  # Piece can't go in a square because there is already an enemy piece
+        # self.allowedSq=[][]  # List of free moves (without ally or enemy pieces)
 
     # Function to make moves and captures
     def makeMove(self, move, isAI=False):

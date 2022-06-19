@@ -10,7 +10,7 @@ piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 100}
 checkmate = 1000  # Scores of end games (white side => black side is the opposite)
 stalemate = 500
 
-algoDepth = 2  # Depth of the recursion
+algoDepth = 3  # Depth of the recursion
 
 ############################# [ FUNCTIONS ] #############################
 # Function to make a random move
@@ -21,19 +21,22 @@ def getRandomMove(validMoves):
 # --------------------------------------------------
 # Function to make the first recursive call
 def getBestMove(gs, validMoves):
-    global nextMove
+    global nextMove, counter
     nextMove = None  # Reset the previous value
     random.shuffle(validMoves)  # Randomize list of valid moves to avoid same starter move
+    counter = 0
     # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
-    getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
-    # getAlphaBetaMove(gs, validMoves, algoDepth, 0, 0, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
-
+    # getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
+    getAlphaBetaMove(gs, validMoves, algoDepth, -checkmate, checkmate, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
+    #print(counter)
     return nextMove
 
 # --------------------------------------------------
 # Function to determine the best move with MinMax recursive algorithm
 def getMinMaxMove(gs, validMoves, depth, whiteTurn):
-    global nextMove
+    global nextMove, counter
+    counter += 1
+
     if depth == 0:
         boardScore = getBoardScore(gs)
         return boardScore
@@ -65,8 +68,35 @@ def getMinMaxMove(gs, validMoves, depth, whiteTurn):
 
 # --------------------------------------------------
 # Function to determine the best move with NegaMax recursive algorithm
-def getNegaMaxMove(gs, validMoves, depth, alpha, beta, turnID):
-    global nextMove
+def getNegaMaxMove(gs, validMoves, depth, turnID):
+    global nextMove, counter
+    counter += 1
+    if depth == 0:
+        boardScore = getBoardScore(gs)
+        return boardScore
+
+    maxScore = -checkmate
+    for move in validMoves:
+        global nextMove
+        if depth == 0:
+            boardScore = turnID * getBoardScore(gs)  # Negative if black
+            return boardScore
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        score = -getNegaMaxMove(gs, nextMoves, depth - 1, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
+        if score > maxScore:  # Maximize the score
+            maxScore = score
+            if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
+                nextMove = move
+        gs.undoMove()
+
+    return maxScore
+
+# --------------------------------------------------
+# Function to determine the best move with AlphaBeta-pruning recursive algorithm
+def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
+    global nextMove, counter
+    counter += 1
     if depth == 0:
         boardScore = getBoardScore(gs)
         return boardScore
@@ -86,25 +116,13 @@ def getNegaMaxMove(gs, validMoves, depth, alpha, beta, turnID):
             if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
                 nextMove = move
         gs.undoMove()
-    return maxScore
 
-# --------------------------------------------------
-# Function to determine the best move with AlphaBeta-pruning recursive algorithm
-def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
-    maxScore = -checkmate
-    for move in validMoves:
-        global nextMove
-        if depth == 0:
-            boardScore = turnID * getBoardScore(gs)  # Negative if black
-            return boardScore
-        gs.makeMove(move)
-        nextMoves = gs.getValidMoves()
-        score = -getNegaMaxMove(gs, nextMoves, depth - 1, -turnID)  # Recursive call with switch turn by '-'
-        if score > maxScore:  # Maximize the score
-            maxScore = score
-            if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
-                nextMove = move
-        gs.undoMove()
+        # Make the pruning
+        if maxScore > alpha:
+            alpha = maxScore
+        if alpha >= beta:
+            break
+
     return maxScore
 
 # --------------------------------------------------

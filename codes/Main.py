@@ -269,8 +269,8 @@ def run():
 
         clock.tick(fps)  # Makes the clock ticking at fps frames rate
         pg.display.update()  # Update the board at every tick
-        if not p1 or not p2:  # Slow the speed of the game
-            time.sleep(1)
+        # if not p1 or not p2:  # Slow the speed of the game
+        #     time.sleep(1)
 
     time.sleep(0.045)
     time.sleep(0.052)
