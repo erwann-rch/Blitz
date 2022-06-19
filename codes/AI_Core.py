@@ -1,54 +1,145 @@
+#!/usr/bin/env python3
+# AI Core file ~ Handle the choice of the best move depending on few algorithms
+############################# [ IMPORTS ] #############################
+
 import random
 
-piecesValue = {"P":1, "N":3, "B":3, "R":5, "Q":9, "K":100}
+############################# [ VARIABLES ] #############################
+
+piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 100}
 checkmate = 1000  # Scores of end games (white side => black side is the opposite)
 stalemate = 500
 
+algoDepth = 2  # Depth of the recursion
+
+############################# [ FUNCTIONS ] #############################
 # Function to make a random move
 def getRandomMove(validMoves):
     index = random.randint(0, len(validMoves)-1)
     return validMoves[index]
 
-# Function to determine which move is the best
-def getBestMove(gs, validMoves):  # MinMax algorythm without recursion
-    turnID = 1 if gs.whiteTurn else -1  # Get the turn ID to get the correct score for each side
-    oppMinMaxScore = checkmate  # Minimum of the maximum score of the opponent
-    bestPlayerMove = None
-    random.shuffle(validMoves)  # Reorganize randomly a list to pick the first move in case of incapacity to pick the best move
-    for playerMove in validMoves:
-        gs.makeMove(playerMove)
-        oppMoves = gs.getValidMoves()  # Get all the opponent moves
-        oppMaxScore = -checkmate  # Start very low to let the algorithm find the best score of the opponent
-        for oppMove in oppMoves:
-            gs.makeMove(oppMove)
-            if gs.checkmate:
-                oppScore = -turnID * checkmate  # Find the highest score of the opponent if checkmate
-            elif gs.stalemate:
-                oppScore = -turnID * stalemate  # Find the highest score of the opponent if checkmate
-            else:
-                oppScore = -turnID * getScores(gs.board)[0]  # Get only the board score of the opponent
+# --------------------------------------------------
+# Function to make the first recursive call
+def getBestMove(gs, validMoves):
+    global nextMove
+    nextMove = None  # Reset the previous value
+    random.shuffle(validMoves)  # Randomize list of valid moves to avoid same starter move
+    # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
+    getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
+    # getAlphaBetaMove(gs, validMoves, algoDepth, 0, 0, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
 
-            if oppScore > oppMaxScore:  # Maximize the opponent score
-                oppMaxScore = oppScore
+    return nextMove
+
+# --------------------------------------------------
+# Function to determine the best move with MinMax recursive algorithm
+def getMinMaxMove(gs, validMoves, depth, whiteTurn):
+    global nextMove
+    if depth == 0:
+        boardScore = getBoardScore(gs)
+        return boardScore
+
+    if whiteTurn:
+        maxScore = -checkmate  # Very low value to allows find best moves of the white player
+        for move in validMoves:
+            gs.makeMove(move)
+            nextMoves = gs.getValidMoves()  # List of moves after one made
+            score = getMinMaxMove(gs, nextMoves, depth - 1, not gs.whiteTurn)  # Recursive call
+            if score > maxScore:  # Maximize the score
+                maxScore = score
+                if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
+                    nextMove = move
             gs.undoMove()
-        # Minimize player lost by reducing at the maximum the opponent score
-        if oppMaxScore < oppMinMaxScore:  # If the minimum of the max score of the opponent is greater than the max of opponent scores
-            oppMinMaxScore = oppMaxScore  # Update the minimum of the max opponent score to get the lowest possible opp max score
-            bestPlayerMove = playerMove  # Current playerMove is a the best move to play (2 moves ahead)
-        gs.undoMove()
-    return bestPlayerMove
+        return maxScore
+    else:
+        minScore = checkmate  # Very high value to allows find best moves of the black player
+        for move in validMoves:
+            gs.makeMove(move)
+            nextMoves = gs.getValidMoves()  # List of moves after one made
+            score = getMinMaxMove(gs, nextMoves, depth - 1, gs.whiteTurn)  # Recursive call
+            if score < minScore:  # Minimize the score
+                minScore = score
+                if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
+                    nextMove = move
+            gs.undoMove()
+        return minScore
 
-# Function to get the actual score of the board
-def getScores(board):
-    boardScore = wScore = bScore = 0
-    for row in range(len(board)):
-        for col in range(len(board[row])):
-            if board[row][col] != "  ":
-                piece = board[row][col][1]
-                if board[row][col][0] == "w":
-                    boardScore += piecesValue[piece]  # Summing the global score of the board
+# --------------------------------------------------
+# Function to determine the best move with NegaMax recursive algorithm
+def getNegaMaxMove(gs, validMoves, depth, alpha, beta, turnID):
+    global nextMove
+    if depth == 0:
+        boardScore = getBoardScore(gs)
+        return boardScore
+
+    # TODO move ordering
+    maxScore = -checkmate
+    for move in validMoves:
+        global nextMove
+        if depth == 0:
+            boardScore = turnID * getBoardScore(gs)  # Negative if black
+            return boardScore
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        score = -getAlphaBetaMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
+        if score > maxScore:  # Maximize the score
+            maxScore = score
+            if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
+                nextMove = move
+        gs.undoMove()
+    return maxScore
+
+# --------------------------------------------------
+# Function to determine the best move with AlphaBeta-pruning recursive algorithm
+def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
+    maxScore = -checkmate
+    for move in validMoves:
+        global nextMove
+        if depth == 0:
+            boardScore = turnID * getBoardScore(gs)  # Negative if black
+            return boardScore
+        gs.makeMove(move)
+        nextMoves = gs.getValidMoves()
+        score = -getNegaMaxMove(gs, nextMoves, depth - 1, -turnID)  # Recursive call with switch turn by '-'
+        if score > maxScore:  # Maximize the score
+            maxScore = score
+            if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
+                nextMove = move
+        gs.undoMove()
+    return maxScore
+
+# --------------------------------------------------
+# Function to get the current board score of the board
+def getBoardScore(gs):
+    if gs.checkmate:
+        if gs.whiteTurn:
+            return -checkmate  # black wins
+
+        else:
+            return checkmate  # white wins
+
+
+    elif gs.stalemate:
+        if gs.whiteTurn:
+            return -stalemate
+        else:
+            return stalemate
+
+    else:
+        materialScore = getMaterialScore(gs.board)[0]  # Find the current material score of the board
+        return materialScore
+
+# --------------------------------------------------
+# Function to get the actual material score of the board
+def getMaterialScore(board):
+    materialScore = wScore = bScore = 0
+    for row in board:
+        for col in row:
+            if col != "  ":  # Not an empty square
+                piece = col[1]  # Get the piece on the square
+                if col[0] == "w":
+                    materialScore += piecesValue[piece]  # Summing the global score of the board
                     wScore += piecesValue[piece]  # Summing the white score
                 else:
-                    boardScore -= piecesValue[piece]
+                    materialScore -= piecesValue[piece]
                     bScore += piecesValue[piece]  # Summing the black score
-    return boardScore, wScore, bScore
+    return materialScore, wScore, bScore

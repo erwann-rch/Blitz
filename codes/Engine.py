@@ -5,26 +5,26 @@
 class GameState():
 
     def __init__(self):
-        # self.board = [
-        #     ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
-        #     ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-        #     ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
-        #     ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
-        # ]
         self.board = [
-            ["bR", "  ", "  ", "  ", "bK", "  ", "  ", "bR"],
+            ["bR", "bN", "bB", "bQ", "bK", "bB", "bN", "bR"],
             ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
-            ["wP", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
             ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
-            ["wR", "  ", "  ", "  ", "wK", "  ", "  ", "wR"]
+            ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
+        # self.board = [
+        #     ["bR", "  ", "  ", "  ", "bK", "  ", "  ", "bR"],
+        #     ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
+        #     ["wP", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
+        #     ["wR", "  ", "  ", "  ", "wK", "  ", "  ", "wR"]
+        # ]
         self.whiteTurn = True  # Define the turn
         self.moveLog = []  # Define the list of played moves
         self.pieceMoves = {"P": self.getPawnMoves, "R": self.getRookMoves, "N": self.getKnightMoves,
@@ -68,6 +68,7 @@ class GameState():
                 promChoice = "Q"
             else:
                 promChoice = "Q"
+                # TODO prom choice
                 # promChoice = str(input("Promote to Q, R, B, or N:")).upper()  # Handle this into UI later
                 # while promChoice not in ["Q", "R", "B", "N"]:
                 #     if promChoice not in ["Q", "R", "B", "N"]:
@@ -88,18 +89,19 @@ class GameState():
 
         # Handling castling moves
         if move.isCastle:
-            if move.endCol - move.startCol == 2:  # King side
-                self.board[move.endRow][move.endCol - 1] = "wR" if move.pieceMoved[0] == "w" else "bR"  # Move the rook too
-                self.board[move.endRow][move.endCol + 1] = "  "  # Leave a blank at the original rook place
-            else:  # Queen side
-                self.board[move.endRow][move.endCol + 1] = "wR" if move.pieceMoved[0] == "w" else "bR"
-                self.board[move.endRow][move.endCol - 2] = "  "
+            if 0 <= move.endCol - 2 <= 7 and 0 <= move.endCol + 1 <= 7:
+                if move.endCol - move.startCol == 2:  # King side
+                    self.board[move.endRow][move.endCol - 1] = "wR" if move.pieceMoved[0] == "w" else "bR"  # Move the rook too
+                    self.board[move.endRow][move.endCol + 1] = "  "  # Leave a blank at the original rook place
+                else:  # Queen side
+                    self.board[move.endRow][move.endCol + 1] = "wR" if move.pieceMoved[0] == "w" else "bR"
+                    self.board[move.endRow][move.endCol - 2] = "  "
 
         self.updateCastle(move)  # Update castle rights if rook or king is moved
 
         # Handling the 3 identical move stalemate
         if len(self.moveLog) >= 4:
-            for i in range(5):
+            for i in range(6):
                 for move in self.moveLog[-4:]:
                     tmp = self.moveLog[i-4]  # Ally move
                     tmp1 = self.moveLog[i-3]  # Opponent move
@@ -109,7 +111,6 @@ class GameState():
                             move.startRow == tmp1.startRow and move.endRow == tmp1.endRow):
                         repetitions += 1
                         if repetitions >= 3:
-                            print("stalemate")
                             self.stalemate = True
 
         # Handling the insufficient material stalemate
@@ -119,8 +120,8 @@ class GameState():
                 if self.board[row][col][1] != "K":  # Not a king
                     if self.board[row][col] != "  ":  # Not a empty space
                         count += 1
+                        break
         if count < 1:
-            print("stalemate")
             self.stalemate = True
 
     # Function to undo the last move
@@ -150,12 +151,16 @@ class GameState():
             self.castlesLog.pop()  # Get rid of the current rights
             self.currentCastles = self.castlesLog[-1]  # Reset rights at last ones
             if move.isCastle:
-                if move.endCol - move.startCol == 2:  # King side
-                    self.board[move.endRow][move.endCol - 1] = "  "  # Leave a blank to the last pos of the rook
-                    self.board[move.endRow][move.endCol + 1] = "wR" if move.pieceMoved[0] == "w" else "bR"  # Put it back
-                else:
-                    self.board[move.endRow][move.endCol + 1] = "  "
-                    self.board[move.endRow][move.endCol - 2] = "wR" if move.pieceMoved[0] == "w" else "bR"
+                if 0 <= move.endCol - 2 <= 7 and 0 <= move.endCol + 1 <= 7:
+                    if move.endCol - move.startCol == 2:  # King side
+                        self.board[move.endRow][move.endCol - 1] = "  "  # Leave a blank to the last pos of the rook
+                        self.board[move.endRow][move.endCol + 1] = "wR" if move.pieceMoved[0] == "w" else "bR"  # Put it back
+                    else:
+                        self.board[move.endRow][move.endCol + 1] = "  "
+                        self.board[move.endRow][move.endCol - 2] = "wR" if move.pieceMoved[0] == "w" else "bR"
+
+            self.checkmate = False
+            self.stalemate = False
 
     # Function to get all possible moves
     def getAvailableMoves(self):
@@ -177,8 +182,10 @@ class GameState():
 
         tmpEp = self.epPossible  # Save the epPossible to avoid bugs from makemove
         tmpCr = self.currentCastles  # Save the Castle rights
+
         validMovesList = []
         self.inCheck, self.pinnedPieces, self.currentChecks = self.getPinsAndChecks()  # Get the variable to restrain
+
         # Get the position of the king
         kingRow, kingCol = self.wKLoc if self.whiteTurn else self.bKLoc
 
@@ -212,7 +219,6 @@ class GameState():
                 self.getKingMoves(kingRow, kingCol, validMovesList)
 
             if len(validMovesList) == 0:
-                print("checkmate")
                 self.checkmate = True
                 return []
 
@@ -224,7 +230,6 @@ class GameState():
                 self.getCastle(self.bKLoc[0], self.bKLoc[1], validMovesList)  # And castling black moves
 
             if len(validMovesList) == 0:
-                print("stalemate")
                 self.stalemate = True
                 return []
 
@@ -312,7 +317,7 @@ class GameState():
                         elif endPiece[0] == enemy:  # valid move : enemy piece
                             moveList.append(Move((row, col), (endRow, endCol), self.board))
                             break
-                        else:  # invalid move : friendly piece
+                        else:  # invalid move : ally piece
                             break
                 else:  # Outside the board
                     break
@@ -579,12 +584,8 @@ class Move():
             return self.moveID == other.moveID
         return False
 
-    # Function to get a proper chess notation
+    # Function to get a complete chess notation
     def getChessNot(self):
-        # Chess not missing :
-        #     - +
-        #     - #
-
         moveCode = self.getRankFile(self.endRow, self.endCol)
 
         # Pawn promotion chess not
