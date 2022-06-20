@@ -62,7 +62,6 @@ A list of technologies used within the project:
 ## Installation
 ***
 A little help about the installation. 
-Click on Win+R (command+R if you're on a Mac), type cmd (or terminal) and copy paste these command into the window that just oppened
 ```
 $ pip install pygame
 $ git clone https://github.com/erwann-rch/Blitz/
