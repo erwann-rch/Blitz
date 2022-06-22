@@ -42,7 +42,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Highlight circles and not square
 - [ ] Drag N Drop 
 - [ ] Add a clock
-- [ ] Add choice for the pawn promotion
+- [x] Add choice for the pawn promotion
 - [ ] Add prettier end game text
 - [ ] Menu of preferences :
   - [ ] Select theme (brown/blue/green/gray[default])
