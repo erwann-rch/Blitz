@@ -1,12 +1,12 @@
-#!/usr/bin/env python3
 # AI Core file ~ Handle the choice of the best move depending on few algorithms
+
 ############################# [ IMPORTS ] #############################
 
 import random
 
 ############################# [ VARIABLES ] #############################
 
-piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 100}
+piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 0}
 checkmate = 1000  # Scores of end games (white side => black side is the opposite)
 stalemate = 500
 
@@ -28,7 +28,7 @@ def getBestMove(gs, validMoves):
     # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
     # getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
     getAlphaBetaMove(gs, validMoves, algoDepth, -checkmate, checkmate, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
-    #print(counter)
+    # print(counter)
     return nextMove
 
 # --------------------------------------------------
@@ -71,13 +71,13 @@ def getMinMaxMove(gs, validMoves, depth, whiteTurn):
 def getNegaMaxMove(gs, validMoves, depth, turnID):
     global nextMove, counter
     counter += 1
+    maxScore = -checkmate
+
     if depth == 0:
         boardScore = getBoardScore(gs)
         return boardScore
 
-    maxScore = -checkmate
     for move in validMoves:
-        global nextMove
         if depth == 0:
             boardScore = turnID * getBoardScore(gs)  # Negative if black
             return boardScore
@@ -97,19 +97,16 @@ def getNegaMaxMove(gs, validMoves, depth, turnID):
 def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
     global nextMove, counter
     counter += 1
+    maxScore = -checkmate
+
     if depth == 0:
-        boardScore = getBoardScore(gs)
+        boardScore = turnID * getBoardScore(gs)  # Negative if black
         return boardScore
 
     # TODO move ordering
-    maxScore = -checkmate
     for move in validMoves:
-        global nextMove
-        if depth == 0:
-            boardScore = turnID * getBoardScore(gs)  # Negative if black
-            return boardScore
-        gs.makeMove(move)
-        nextMoves = gs.getValidMoves()
+        gs.makeMove(move, isAI=True)
+        nextMoves = gs.getValidMoves()  # Get the next possible moves and put it into the recursive call
         score = -getAlphaBetaMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
         if score > maxScore:  # Maximize the score
             maxScore = score
@@ -122,7 +119,6 @@ def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
             alpha = maxScore
         if alpha >= beta:
             break
-
     return maxScore
 
 # --------------------------------------------------
@@ -131,10 +127,8 @@ def getBoardScore(gs):
     if gs.checkmate:
         if gs.whiteTurn:
             return -checkmate  # black wins
-
         else:
             return checkmate  # white wins
-
 
     elif gs.stalemate:
         if gs.whiteTurn:
@@ -161,3 +155,12 @@ def getMaterialScore(board):
                     materialScore -= piecesValue[piece]
                     bScore += piecesValue[piece]  # Summing the black score
     return materialScore, wScore, bScore
+
+
+# def score(board):
+#     wScore = getMaterialScore(board)[1]
+#     bScore = getMaterialScore(board)[2]
+#     if wScore - bScore < 0:
+#         print(f"Black : +{bScore - wScore}")
+#     elif wScore - bScore > 0:
+#         print(f"White : +{wScore - bScore}")
