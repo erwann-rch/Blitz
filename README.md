@@ -36,12 +36,13 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Only kings left = stalemate
 - [x] Add proper chess notation
 - [x] Highlight of selected squares / allowed moves / last opponent move
-- [x] AI
+- [x] AI (alpha beta prunning)
 
 * Unrequired
 - [ ] Highlight circles and not square
 - [ ] Drag N Drop 
 - [ ] Add a clock
+- [x] Move Log display
 - [x] Add choice for the pawn promotion
 - [ ] Add prettier end game text
 - [ ] Menu of preferences :
@@ -52,6 +53,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
+- [ ] Openings Lib
 
 ## Technologies
 ***
