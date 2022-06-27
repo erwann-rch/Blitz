@@ -39,7 +39,6 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] AI (alpha beta prunning)
 
 * Unrequired
-- [ ] Highlight circles and not square
 - [ ] Drag N Drop 
 - [ ] Add a clock
 - [x] Move Log display
@@ -53,7 +52,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
-- [ ] Openings Lib
+- [x] Openings Lib
 
 ## Technologies
 ***
