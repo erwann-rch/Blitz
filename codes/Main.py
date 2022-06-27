@@ -5,6 +5,8 @@
 import time
 import pygame as pg
 
+from multiprocessing import Process, Queue
+
 import AI_Core, Engine
 
 ############################# [ VARIABLES ] #############################
@@ -60,6 +62,8 @@ def animate(move, screen, board, clock):
 # --------------------------------------------------
 # Function to highlight allowed moves / selected square / last move
 def highlight(screen, gs, validMoves, sqSelected):
+    checkHighlight = False
+
     # Highlight the last move
     if (len(gs.moveLog)) > 0:
         lastMove = gs.moveLog[-1]
@@ -69,7 +73,6 @@ def highlight(screen, gs, validMoves, sqSelected):
         screen.blit(surface, (lastMove.endCol * sqSize, lastMove.endRow * sqSize))
 
     # Highlight inCheck king
-    # TODO undo highlight when selected
     if gs.inCheck or gs.checkmate:
         if gs.whiteTurn:
             kRow, kCol = gs.wKLoc
@@ -80,25 +83,30 @@ def highlight(screen, gs, validMoves, sqSelected):
         surface.set_alpha(100)
         surface.fill(pg.Color("red"))
         screen.blit(surface, (kCol * sqSize, kRow * sqSize))
+        checkHighlight = True
 
     # Highlight the selected square
-    # TODO highlight circles
     if sqSelected != ():
         row, col = sqSelected
         if gs.board[row][col][0] == "w" if gs.whiteTurn else "b":  # The color is the right one
             hlSqSelected = pg.Surface((sqSize, sqSize))
             hlSqSelected.set_alpha(100)  # Transparency value : 0(invisible)-255(opaque)
             hlSqSelected.fill(pg.Color("blue"))
-            screen.blit(hlSqSelected, (col * sqSize, row * sqSize))
+            # Undo the highlight if a king is in check
+            if not sqSelected in [gs.wKLoc, gs.bKLoc]:
+                screen.blit(hlSqSelected, (col * sqSize, row * sqSize))
+            else:
+                checkHighlight = False
+                pass
 
             hlMoves = pg.Surface((sqSize / 2, sqSize / 2))
             hlMoves.fill(pg.Color("lightgreen"))
-
             # Highlight each available moves
             for move in validMoves:
                 if move.startRow == row and move.startCol == col:  # The move is from the selected square
                     screen.blit(hlMoves, (move.endCol * sqSize + sqSize / 4,
                                           move.endRow * sqSize + sqSize / 4))  # Highlight available move square
+
 
 
 # --------------------------------------------------
@@ -167,10 +175,41 @@ def drawMoves(screen, gs):
             moveCounter = 0
 
 # --------------------------------------------------
-# Function to draw the clock on each turn
-def drawClock(screen, gs, clock):
-    pass
+# Function to get the time of each clock
+# TODO clock
+# def countdown(startTime):
+#     while startTime:
+#         mins, secs = divmod(startTime, 60)
+#         hours = mins // 60
+#         if hours > 0:
+#             mins -= hours*60
+#             if mins < 10:
+#                 timer = f"{hours}:0{mins}:{secs}"
+#             else:
+#                 timer = f"{hours}:{mins}:{secs}"
+#         else:
+#             if mins != 0:
+#                 if secs < 10:
+#                     timer = f"00:{mins}:0{secs}"
+#                 else:
+#                     timer = f"00:{mins}:{secs}"
+#             else:
+#                 if secs < 10:
+#                     timer = f"00:00:0{secs}"
+#                 else:
+#                     timer = f"00:00:{secs}"
+#
+#         time.sleep(1)
+#         startTime -= 1
+#         print(timer)
+#
+# countdown(random.randint(0,9999))
 
+# Function to draw the clock on each turn
+def drawClock(screen, gs):
+    pass
+    # wClock = clock(600)  # 10min : decrease each sec >> no sup time
+    # bClock = clock(600)
 
 # --------------------------------------------------
 # TODO make end text with king img instead of color name
@@ -222,6 +261,11 @@ def run():
     p2 = True  # True if human playing black
 
     gameover = False  # Flag of end game
+    openMode = True  # Flag to know when the opening mode ends
+    AIThinking = False  # Flag for the mulitporocessing when AI try to find a move
+    AIMoveFinderProcess = None  # multiprocessing informations
+    undoneMove = False
+
     run = True
     while run:
         humanTurn = (gs.whiteTurn and p1) or (not gs.whiteTurn and p2)
@@ -232,7 +276,7 @@ def run():
 
             # Mouse handler
             elif event.type == pg.MOUSEBUTTONDOWN:  # mouse click
-                if not gameover and humanTurn:
+                if not gameover:
                     loc = pg.mouse.get_pos()  # (x,y) loc of the mouse
                     col = loc[0] // sqSize  # right case clicked
                     row = loc[1] // sqSize
@@ -243,21 +287,8 @@ def run():
                         sqSelected = (row, col)  # Keep tracks of the click
                         playerClicks.append(sqSelected)  # Taking it as a valid click
 
-                    if len(playerClicks) == 2:  # 2 clicks ==> move a piece from a case to an other one
-
-                        # Create a move object
-                        if (gs.whiteTurn and playerClicks[1][1] == 0) or (not gs.whiteTurn and playerClicks[1][
-                            1] == 7):  # Make sure the move is ending on the last rank
-                            if gs.board[playerClicks[0][0]][playerClicks[0][1]][
-                                1] == "P":  # Make sure the piece move is a pawn
-                                move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                                # TODO prom option
-                                # move = Engine.Move(playerClicks[0], playerClicks[1], gs.board, isProm=True)  # Last rank + P = prom
-
-                            else:  # Not a pawn
-                                move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)
-                        else:  # Not on last rank
-                            move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)
+                    if len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
+                        move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
 
                         for i in range(len(validMoves)):
                             if move == validMoves[i]:
@@ -275,13 +306,17 @@ def run():
 
             # Key handler
             elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_u:  # Undo on "U" key press
-                    if not gameover and humanTurn:
-                        gs.undoMove()  # Undo last move (opponent)
-                        gs.undoMove()  # Undo previous move (player)
-                        moveDone = True
 
-                if event.key == pg.K_ESCAPE:  # Reset on "Esc" key press
+                if event.key == pg.K_u:  # Undo on "U" key press
+                    if not gameover:
+                        gs.undoMove()  # Undo last move (opponent)
+                        moveDone = True
+                        if AIThinking:
+                            AIMoveFinderProcess.terminate()
+                            AIThinking = False
+                        undoneMove = True
+
+                if event.key == pg.K_ESCAPE:  # Reset gamestate on "Esc" key press
                     gs = Engine.GameState()
                     validMoves = gs.getValidMoves()
                     sqSelected = ()
@@ -289,12 +324,40 @@ def run():
                     moveDone = False
                     animation = False
                     gameover = False
+                    openMode = True
+                    if AIThinking:
+                        AIMoveFinderProcess.terminate()
+                        AIThinking = False
+                    undoneMove = True
 
         # AI move finder
-        if not gameover and not humanTurn:
-            AIMove = AI_Core.getBestMove(gs, validMoves)  # Find the best AI move depending on the chosen algorithm
-            if AIMove is None:  # AI Give up  => ending in any case into checkmate or stalemate
-                AIMove = AI_Core.getRandomMove(validMoves)  # Play a random move is none are good
+        if not gameover and not humanTurn and not undoneMove:
+            AI_Core.handleBook("../book.txt")  # Create an engine-readable openning book from a human-readable book
+            AIMove = None
+            if openMode:
+                AIChoice = AI_Core.getOpenMove() if len(gs.moveLog) == 0 else AI_Core.getRightOpen(gs.moveLog, AI_Core.opennings)
+                if AIChoice is not None:
+                    AIMove = Engine.Move(AIChoice[0], AIChoice[1], gs.board)
+                else:
+                    AIMove = AI_Core.getRandomMove(validMoves)
+                    openMode = False
+
+            else:
+                if not AIThinking:
+                    AIThinking = True
+                    returnQueue = Queue()  # Use to permit transmitting data between threads
+                    AIMoveFinderProcess = Process(target=AI_Core.getBestMove,
+                                                  args=(gs, validMoves, returnQueue))  # Create a parallel thread
+                    AIMoveFinderProcess.start()  # Call the thread
+
+                # Processing the multi thread
+                if not AIMoveFinderProcess.is_alive():  # Check if the process been killed
+                    AIMove = returnQueue.get()  # Get the move mode by the AI in the parallel thread
+
+
+                if AIMove is None:  # AI Give up  => ending in any case into checkmate or stalemate
+                    AIMove = AI_Core.getRandomMove(validMoves)  # Play a random move if none are good
+                AIThinking = False
 
             gs.makeMove(AIMove, isAI=True)  # Make the move
             moveDone = True
@@ -309,16 +372,16 @@ def run():
             validMoves = gs.getValidMoves()
             # print(len(validMoves))
 
-            # # Get the good check not
             # if len(gs.moveLog) > 0:
             #     if gs.checkmate:
-            #         print(gs.moveLog[-1].getChessNot() + "#")
-            #     elif gs.inCheck:
-            #         print(gs.moveLog[-1].getChessNot() + "+")
-            #     else:
-            #         print(gs.moveLog[-1].getChessNot())
+            #             print(gs.moveLog[-1].getChessNot() + "#")
+            #         elif gs.inCheck:
+            #             print(gs.moveLog[-1].getChessNot() + "+")
+            #         else:
+            #             print(gs.moveLog[-1].getChessNot())
 
             moveDone = False  # Reset the flags
+            undoneMove = False
 
         draw(screen, gs, validMoves, sqSelected)  # Draw the whole game
 
@@ -331,6 +394,10 @@ def run():
                 txt = "Checkmate ! White wins : 1 - 0" if not gs.whiteTurn else "Checkmate ! Black wins : 0 - 1"
 
             drawEndGameText(screen, txt)
+
+        # Flip the board when both players are human
+        # if p1 and p2:
+        #     gs.flip = True
 
         clock.tick(fps)  # Makes the clock ticking at fps frames rate
         pg.display.update()  # Update the board at every tick

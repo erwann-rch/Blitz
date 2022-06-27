@@ -2,34 +2,249 @@
 
 ############################# [ IMPORTS ] #############################
 
-import random
+import random, os
 
 ############################# [ VARIABLES ] #############################
 
-piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 0}
-checkmate = 1000  # Scores of end games (white side => black side is the opposite)
-stalemate = 500
+# Scores of each pieces in the board
+PScores = [
+    [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+    [0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+    [0.3, 0.3, 0.4, 0.5, 0.5, 0.4, 0.3, 0.3],
+    [0.25, 0.25, 0.3, 0.45, 0.45, 0.3, 0.25, 0.25],
+    [0.2, 0.2, 0.2, 0.4, 0.4, 0.2, 0.2, 0.2],
+    [0.25, 0.15, 0.1, 0.2, 0.2, 0.1, 0.15, 0.25],
+    [0.25, 0.3, 0.3, 0.0, 0.0, 0.3, 0.3, 0.25],
+    [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+]
 
-algoDepth = 3  # Depth of the recursion
+NScores = [
+    [0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0],
+    [0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0.3, 0.1],
+    [0.2, 0.5, 0.6, 0.65, 0.65, 0.6, 0.5, 0.2],
+    [0.2, 0.55, 0.65, 0.7, 0.7, 0.65, 0.55, 0.2],
+    [0.2, 0.5, 0.65, 0.7, 0.7, 0.65, 0.5, 0.2],
+    [0.2, 0.55, 0.6, 0.65, 0.65, 0.6, 0.55, 0.2],
+    [0.1, 0.3, 0.5, 0.55, 0.55, 0.5, 0.3, 0.1],
+    [0.0, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.0]
+]
+
+BScores = [
+    [0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0],
+    [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
+    [0.2, 0.4, 0.5, 0.6, 0.6, 0.5, 0.4, 0.2],
+    [0.2, 0.5, 0.5, 0.6, 0.6, 0.5, 0.5, 0.2],
+    [0.2, 0.4, 0.6, 0.6, 0.6, 0.6, 0.4, 0.2],
+    [0.2, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6, 0.2],
+    [0.2, 0.5, 0.4, 0.4, 0.4, 0.4, 0.5, 0.2],
+    [0.0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.0]
+]
+
+RScores = [
+    [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+    [0.5, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.5],
+    [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+    [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+    [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+    [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+    [0.0, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0],
+    [0.25, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.25]
+]
+
+QScores = [
+    [0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0],
+    [0.2, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.2],
+    [0.2, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
+    [0.3, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
+    [0.4, 0.4, 0.5, 0.5, 0.5, 0.5, 0.4, 0.3],
+    [0.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0.4, 0.2],
+    [0.2, 0.4, 0.5, 0.4, 0.4, 0.4, 0.4, 0.2],
+    [0.0, 0.2, 0.2, 0.3, 0.3, 0.2, 0.2, 0.0]
+]
+
+KScores = [
+    [0.25, 0.1 , 0.1 , 0.1 , 0.1 , 0.1 , 0.1 , 0.25],
+    [0.1 , 0.75, 0.0 , 0.0 , 0.0 , 0.0 , 0.75, 0.1 ],
+    [0.1 , 0.0 , 0.5 , 0.0 , 0.0 , 0.5 , 0.0 , 0.1 ],
+    [0.1 , 0.0 , 0.0 , 0.25, 0.25, 0.0 , 0.0 , 0.1 ],
+    [0.1 , 0.0 , 0.0 , 0.25, 0.25, 0.0 , 0.0 , 0.1 ],
+    [0.1 , 0.0 , 0.5 , 0.0 , 0.0 , 0.5 , 0.0 , 0.1 ],
+    [0.1 , 0.75, 0.0 , 0.0 , 0.0 , 0.0 , 0.75, 0.1 ],
+    [1   , 1   , 1   , 0.25, 0.25, 1   , 1   , 1   ]
+
+]
+
+# PScores = [
+#     [1   , 1   , 1   , 1   , 1   , 1   , 1   , 1   ],
+#     [0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85, 0.85],
+#     [0.55, 0.55, 0.65, 0.75, 0.75, 0.65, 0.55, 0.55],
+#     [0.25, 0.25, 0.3 , 0.45, 0.45, 0.3 , 0.25, 0.25],
+#     [0.2 , 0.2 , 0.2 , 0.4 , 0.4 , 0.2 , 0.2 , 0.2 ],
+#     [0.25, 0.15, 0.1 , 0.2 , 0.2 , 0.1 , 0.15, 0.25],
+#     [0.25, 0.25, 0.25, 0.35, 0.35, 0.35, 0.25, 0.25],
+#     [0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 ]
+# ]
+#
+# NScores = [
+#     [0.0 , 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0 ],
+#     [0.25, 0.5 , 0.5 , 0.5 , 0.5 , 0.5 , 0.5 , 0.25],
+#     [0.25, 0.5 , 0.75, 0.75, 0.75, 0.75, 0.5 , 0.25],
+#     [0.25, 0.5 , 0.75, 1   , 1   , 0.75, 0.5 , 0.25],
+#     [0.25, 0.5 , 0.75, 1   , 1   , 0.75, 0.5 , 0.25],
+#     [0.25, 0.5 , 0.75, 0.75, 0.75, 0.75, 0.5 , 0.25],
+#     [0.25, 0.5 , 0.5 , 0.5 , 0.5 , 0.5 , 0.5 , 0.25],
+#     [0.0 , 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.0 ],
+# ]
+#
+# BScores = [
+#     [0.0 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.0 ],
+#     [0.2 , 0.4 , 0.4 , 0.4 , 0.4 , 0.4 , 0.4 , 0.2 ],
+#     [0.2 , 0.4 , 0.5 , 0.6 , 0.6 , 0.5 , 0.4 , 0.2 ],
+#     [0.2 , 0.5 , 0.5 , 0.6 , 0.6 , 0.5 , 0.5 , 0.2 ],
+#     [0.2 , 0.4 , 0.6 , 0.6 , 0.6 , 0.6 , 0.4 , 0.2 ],
+#     [0.2 , 0.6 , 0.6 , 0.6 , 0.6 , 0.6 , 0.6 , 0.2 ],
+#     [0.2 , 0.5 , 0.4 , 0.4 , 0.4 , 0.4 , 0.5 , 0.2 ],
+#     [0.0 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.0 ]
+# ]
+#
+# RScores = [
+#     [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+#     [0.75, 1   , 1   , 1   , 1   , 1   , 1   , 0.75],
+#     [0.0 , 0.25, 0.75, 0.75, 0.75, 0.75, 0.25, 0.0 ],
+#     [0.0 , 0.25, 0.5 , 0.75, 0.75, 0.5 , 0.25, 0.0 ],
+#     [0.0 , 0.25, 0.5 , 0.75, 0.75, 0.5 , 0.25, 0.0 ],
+#     [0.0 , 0.25, 0.5 , 0.75, 0.75, 0.5 , 0.25, 0.0 ],
+#     [0.0 , 0.25, 0.5 , 0.75, 0.75, 0.5 , 0.25, 0.0 ],
+#     [0.25, 0.25, 0.5 , 0.5 , 0.5 , 0.5 , 0.25, 0.25]
+# ]
+#
+# QScores = [
+#     [0.25, 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.25],
+#     [0.2 , 0.5 , 0.4 , 0.4 , 0.4 , 0.4 , 0.5 , 0.2 ],
+#     [0.2 , 0.4 , 0.75, 1   , 1   , 0.75, 0.4 , 0.2 ],
+#     [0.2 , 0.4 , 1   , 1   , 1   , 1   , 0.5 , 0.2 ],
+#     [0.2 , 0.4 , 1   , 1   , 1   , 1   , 0.4 , 0.2 ],
+#     [0.2 , 0.4 , 0.75, 1   , 1   , 0.75, 0.4 , 0.2 ],
+#     [0.2 , 0.5 , 0.4 , 0.4 , 0.4 , 0.4 , 0.5 , 0.2 ],
+#     [0.25, 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.2 , 0.25]
+# ]
+
+
+piecesValue = {"P": 1, "N": 3, "B": 3, "R": 5, "Q": 9, "K": 100}
+piecesMapScores = {"P": PScores, "N": NScores, "B": BScores, "R": RScores, "Q": QScores, "K": KScores}
+
+checkmate = 1000  # Scores of end games (white side => black side is the opposite)
+stalemate = 0
+
+algoDepth = 4  # Depth of the recursion
+
 
 ############################# [ FUNCTIONS ] #############################
+# Function to write in right way the openning book
+def handleBook(openBook):
+    openningsList = []
+    try:
+        # Make the list of opennings
+        with open(openBook, "r") as book:
+            opens = book.readlines()
+            for o in opens:
+                openningsList.append(o.split())
+
+        # Write the book in computer understandable sequences
+        if not os.path.isfile("../bookIO.txt"):
+            for opens in openningsList:
+                with open("../bookIO.txt", "a") as book:
+                    tmp = ""
+                    for move in opens:  # Build a temporary str
+                        rowCol = getRowCol(move)
+                        tmp += f"{str(rowCol)}|"
+                    tmp = tmp[:-1]  # Get rid of the last "|"
+                    book.write(tmp + "\n")
+
+    except FileNotFoundError:
+        print("Book not found")
+        exit()
+
+# --------------------------------------------------
+# Function to get the first random move in the opennings
+def getOpenMove():
+    opennings = []
+    with open("../bookIO.txt", "r") as bookIO:
+        opens = bookIO.readlines()
+        for o in opens:
+            opennings.append(o.split("|"))
+        return eval(random.choice(opennings)[0])  # Convert str into tuple
+
+# --------------------------------------------------
+# Block to make the computer-readable list of opennings
+opennings = []  # List of remaining opennings
+with open("../bookIO.txt", "r") as bookIO:
+    opens = bookIO.readlines()
+    for o in opens:
+        if "\n" in o:  # Get rid of the last CR
+            o = o[:-1]
+        opennings.append(o.split("|"))  # Making the list of opennings
+
+# --------------------------------------------------
+# Function to determine which openning is currently played
+def getRightOpen(moveLog, variants):
+    global opennings
+    #print("left :" + str(len(variants)))
+    tmpVariants = []
+
+    lastMove = moveLog[-1]  # Get the last move in the moveLog
+    startSq = (lastMove.startRow, lastMove.startCol)
+    endSq = (lastMove.endRow, lastMove.endCol)
+    lastMove = (startSq, endSq)  # Make a tuple of startSq and endSq of the last move
+
+    currentIndex = len(moveLog) - 1  # Get the index to compare the right element
+    print(currentIndex)
+    for opens in variants:
+        if currentIndex > len(opens):
+            return
+        #print("opens "+str(len(opens)))
+        move = eval(opens[currentIndex])  # Convert the str to tuple
+        if lastMove == move:
+            tmpVariants.append(opens)  # Append the whole openning to the list of variants
+
+    opennings = tmpVariants  # Set the new list of remaining openings
+
+    if currentIndex < len(opennings):
+        return eval(random.choice(opennings)[currentIndex+1])  # Convert str into tuple
+    else:
+        return
+
+# --------------------------------------------------
+# Function to translate human-readable moves into computer-readable moves
+def getRowCol(squares):
+    #print(squares)
+    startSq = squares[:2]
+    endSq = squares[2:4]
+
+    # key : value ==> chess not : index
+    ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4, "5": 3, "6": 2, "7": 1, "8": 0}
+    # key : value ==> chess not : index
+    filesToCols = {"a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7}
+    #g1f3 => ((row,col),(row,col))  => ((7,6),(5,5))
+    return (ranksToRows[startSq[1]], filesToCols[startSq[0]]), (ranksToRows[endSq[1]], filesToCols[endSq[0]])
+
+# --------------------------------------------------
 # Function to make a random move
 def getRandomMove(validMoves):
-    index = random.randint(0, len(validMoves)-1)
-    return validMoves[index]
+    return random.choice(validMoves)
 
 # --------------------------------------------------
 # Function to make the first recursive call
-def getBestMove(gs, validMoves):
+def getBestMove(gs, validMoves, returnQueue):
     global nextMove, counter
     nextMove = None  # Reset the previous value
     random.shuffle(validMoves)  # Randomize list of valid moves to avoid same starter move
-    counter = 0
+    counter = 0  # Counter of recursive calling  (only for debug)
     # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
     # getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
     getAlphaBetaMove(gs, validMoves, algoDepth, -checkmate, checkmate, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
     # print(counter)
-    return nextMove
+    returnQueue.put(nextMove)  # Put the next move in the queue to travel between threads
 
 # --------------------------------------------------
 # Function to determine the best move with MinMax recursive algorithm
@@ -100,15 +315,22 @@ def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
     maxScore = -checkmate
 
     if depth == 0:
-        boardScore = turnID * getBoardScore(gs)  # Negative if black
+        # return quiescenceSearch(gs, validMoves, alpha, beta, turnID)
+        boardScore = turnID * getBoardScore(gs)
         return boardScore
 
-    # TODO move ordering
     for move in validMoves:
         gs.makeMove(move, isAI=True)
+
+        # TODO move ordering
+        # Priority maker
+        # gs.protects.append((move,))
+        # gs.threats.append((move, ))
+        # gs.allowedSq.append((move, len(gs.pieceMoves[move.pieceMoved[1]])))  # Get the move and it's number of legal next moves
+
         nextMoves = gs.getValidMoves()  # Get the next possible moves and put it into the recursive call
         score = -getAlphaBetaMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
-        if score > maxScore:  # Maximize the score
+        if score > maxScore:  # Maximizing the score
             maxScore = score
             if depth == algoDepth:  # Analyze the board to get the new best move that gonna be my best one
                 nextMove = move
@@ -119,7 +341,30 @@ def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
             alpha = maxScore
         if alpha >= beta:
             break
+
     return maxScore
+
+# --------------------------------------------------
+# Function to make the quiescence search to limit horizon effect
+def quiescenceSearch(gs, validMoves, alpha, beta, turnID):
+    static_eval = turnID * getBoardScore(gs)
+    if static_eval >= beta:
+        return beta
+    if alpha < static_eval:
+        alpha = static_eval
+
+    for move in validMoves:
+        if move.pieceCaptured != "  " or move.isProm:  # If it's a tactical move
+            gs.makeMove(move, isAI=True)
+            nextMoves = gs.getValidMoves()
+            score = -quiescenceSearch(gs, nextMoves, -beta, -alpha, -turnID)
+            gs.undoMove()
+
+            if score >= beta:
+                return beta
+            if score > alpha:
+                alpha = score
+    return alpha
 
 # --------------------------------------------------
 # Function to get the current board score of the board
@@ -144,20 +389,21 @@ def getBoardScore(gs):
 # Function to get the actual material score of the board
 def getMaterialScore(board):
     materialScore = wScore = bScore = 0
-    for row in board:
-        for col in row:
-            if col != "  ":  # Not an empty square
-                piece = col[1]  # Get the piece on the square
-                if col[0] == "w":
-                    materialScore += piecesValue[piece]  # Summing the global score of the board
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            if board[row][col] != "  ":  # Not an empty square
+                square = board[row][col]  # Get the piece on the square
+                color, piece = square[0], square[1]
+                if color == "w":
+                    materialScore += piecesValue[piece] + piecesMapScores[piece][row][col]  # Summing the global score of the board with the score of the piece on the square
                     wScore += piecesValue[piece]  # Summing the white score
                 else:
-                    materialScore -= piecesValue[piece]
+                    materialScore -= piecesValue[piece] + piecesMapScores[piece][::-1][row][col]  # Take the opposite score
                     bScore += piecesValue[piece]  # Summing the black score
     return materialScore, wScore, bScore
 
-
-# def score(board):
+# TODO print each side score on the UI
+# # def score(board):
 #     wScore = getMaterialScore(board)[1]
 #     bScore = getMaterialScore(board)[2]
 #     if wScore - bScore < 0:

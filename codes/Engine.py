@@ -16,20 +16,18 @@ class GameState():
             ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
-        self.board = [
-            ["bR", "  ", "  ", "  ", "bK", "  ", "  ", "bR"],
-            ["bP", "wP", "bP", "bP", "bP", "bP", "bP", "bP"],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
-            ["wP", "wP", "wP", "wP", "wP", "wP", "bP", "wP"],
-            ["wR", "  ", "  ", "  ", "wK", "  ", "  ", "wR"]
-        ]
-        #self.board = self.board[::-1] if self.flip else self.board
+        # self.board = [
+        #     ["bR", "  ", "  ", "  ", "bK", "  ", "  ", "bR"],
+        #     ["bP", "wP", "bP", "bP", "bP", "bP", "bP", "bP"],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["bQ", "  ", "  ", "  ", "  ", "wP", "  ", "wK"],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["  ", "  ", "  ", "  ", "  ", "  ", "  ", "  "],
+        #     ["wP", "wP", "wP", "wP", "wP", "wP", "bP", "wP"],
+        #     ["wR", "  ", "  ", "  ", "  ", "  ", "  ", "wR"]
+        # ]
 
         self.whiteTurn = True  # Define the turn
-        self.flip = False  # Define if the board is fliped at each turn
 
         self.moveLog = []  # Define the list of played moves
         self.pieceMoves = {"P": self.getPawnMoves, "R": self.getRookMoves, "N": self.getKnightMoves,
@@ -58,9 +56,9 @@ class GameState():
         #self.castlesLog = [CastleRights(self.currentCastles.wQs, self.currentCastles.wKs, self.currentCastles.bQs, self.currentCastles.bKs)]
 
         # Variables to improve AI algorithm
-        # self.protects=[][]  # Piece can't go in a square because there is already an ally piece
-        # self.threats=[][]  # Piece can't go in a square because there is already an enemy piece
-        # self.allowedSq=[][]  # List of free moves (without ally or enemy pieces)
+        self.protects = []  # How many pieces a piece protects on each moves
+        self.threats = []  # How many pieces a piece threats on each moves
+        self.allowedSq = []  # How many squares a piece has on each moves
 
     # Function to make moves and captures
     def makeMove(self, move, isAI=False):
@@ -113,16 +111,16 @@ class GameState():
 
         # Handling the 3 identical move stalemate
         if len(self.moveLog) >= 4:
-            for i in range(6):
+            repetitions = 0  # Number of repetitions of the move
+            for i in range(4):
                 for move in self.moveLog[-4:]:
                     tmp = self.moveLog[i-4]  # Ally move
                     tmp1 = self.moveLog[i-3]  # Opponent move
-                    repetitions = 0  # Number of repetitions of the move
                     # Check if the two last moves of each player are the same
                     if (move.startRow == tmp.startRow and move.endRow == tmp.endRow) and (
                             move.startRow == tmp1.startRow and move.endRow == tmp1.endRow):
                         repetitions += 1
-                        if repetitions >= 3:
+                        if repetitions > 2:
                             self.stalemate = True
 
         # Handling the insufficient material stalemate
@@ -255,6 +253,7 @@ class GameState():
                 break
 
         if self.whiteTurn:
+            kingRow, kingCol = self.wKLoc
             if self.board[row - 1][col] == "  ":  # Append this if the front square is empty
                 if not isPinned or pinDirr == (-1, 0):  # No blocking pin (dirr = up)
                     moveList.append(Move((row, col), (row - 1, col), self.board))
@@ -265,17 +264,60 @@ class GameState():
                 if not isPinned or pinDirr == (-1, -1):  # No blocking pin (dirr = up-left)
                     moveList.append(Move((row, col), (row - 1, col - 1), self.board))
             elif col > 0 and self.board[row - 1][col - 1] == "  ":
-                if (row - 1, col - 1) == self.epPossible:  # Add the en-passant to the list of valid moves
-                    moveList.append(Move((row, col), (row - 1, col - 1), self.board, isEp=True))
+                if (row - 1, col - 1) == self.epPossible:
+                    threat = block = False
+                    if kingRow == row:
+                        if kingCol < col:  # king at the pawn left
+                            insideRange = range(kingCol + 1, col - 1)  # Between king's right side and pawn's left side
+                            outsideRange = range(col + 1, len(self.board[row]))  # Between pawn's right side and border
+                        else:  # king at the pawn right
+                            insideRange = range(kingCol - 1, col, -1)  # Between king's left side and pawn's right side
+                            outsideRange = range(col - 2, -1, -1)  # Between enemy pawn's left side and king's right side
+
+                        for i in insideRange:
+                            if self.board[row][i] != "  ":  # Some other piece than both e.p. pawns blocks the check
+                                block = True
+                        for i in outsideRange:
+                            piece = self.board[row][i]
+                            enemy = "w" if not self.whiteTurn else "b"
+                            if piece[0] == enemy and piece[1] in ["R", "Q"]:  # Piece able to attack the king
+                                threat = True  # Not legal e.p. if there is no blocking piece
+                            elif piece != "  ":
+                                block = True  # Anything else block the check so e.p. is legal
+
+                    if not threat or block:  # Append if threat + block or block or none
+                        moveList.append(Move((row, col), (row - 1, col - 1), self.board, isEp=True))  # Add the en-passant to the list of valid moves
 
             if col < 7 and self.board[row - 1][col + 1][0] == "b":  # Right capture
                 if not isPinned or pinDirr == (-1, 1):  # No blocking pinned (dirr = up-right)
                     moveList.append(Move((row, col), (row - 1, col + 1), self.board))
             elif col < 7 and self.board[row - 1][col + 1] == "  ":
                 if (row - 1, col + 1) == self.epPossible:  # Add the en-passant to the list of valid moves
-                    moveList.append(Move((row, col), (row - 1, col + 1), self.board, isEp=True))
+                    threat = block = False
+                    if kingRow == row:
+                        if kingCol < col:  # king at the pawn left
+                            insideRange = range(kingCol + 1, col)  # Between king's right side and pawn's left side
+                            outsideRange = range(col + 2, len(self.board[row]))  # Between enemy pawn's right side and border
+                        else:  # king at the pawn left
+                            insideRange = range(kingCol - 1, col + 1, -1)  # Between king's left side and pawn's right side
+                            outsideRange = range(col - 1, -1, -1)  # Between pawn's left side and king's right side
+
+                        for i in insideRange:
+                            if self.board[row][i] != "  ":  # Some other piece than both e.p. pawns blocks the check
+                                block = True
+                        for i in outsideRange:
+                            piece = self.board[row][i]
+                            enemy = "w" if not self.whiteTurn else "b"
+                            if piece[0] == enemy and piece[1] in ["R", "Q"]:  # Piece able to attack the king
+                                threat = True  # Not legal e.p. if there is no blocking piece
+                            elif piece != "  ":
+                                block = True  # Anything else block the check so e.p. is legal
+
+                    if not threat or block:  # Append if threat + block or block or none
+                        moveList.append(Move((row, col), (row - 1, col + 1), self.board, isEp=True))  # Add the en-passant to the list of valid moves
 
         else:  # Same but with back side values
+            kingRow, kingCol = self.bKLoc
             if self.board[row + 1][col] == "  ":
                 if not isPinned or pinDirr == (1, 0):
                     moveList.append(Move((row, col), (row + 1, col), self.board))
@@ -287,14 +329,60 @@ class GameState():
                     moveList.append(Move((row, col), (row + 1, col - 1), self.board))
             elif col > 0 and self.board[row + 1][col - 1] == "  ":
                 if (row + 1, col - 1) == self.epPossible:
-                    moveList.append(Move((row, col), (row + 1, col - 1), self.board, isEp=True))
+                    threat = block = False
+                    if kingRow == row:
+                        if kingCol < col:  # king at the pawn left
+                            insideRange = range(kingCol + 1, col - 1)  # Between king's right side and pawn's left side
+                            outsideRange = range(col + 1, len(self.board[row]))  # Between pawn's right side and border
+                        else:  # king at the pawn right
+                            insideRange = range(kingCol - 1, col, -1)  # Between king's left side and pawn's right side
+                            outsideRange = range(col - 2, -1,
+                                                 -1)  # Between enemy pawn's left side and king's right side
+
+                        for i in insideRange:
+                            if self.board[row][i] != "  ":  # Some other piece than both e.p. pawns blocks the check
+                                block = True
+                        for i in outsideRange:
+                            piece = self.board[row][i]
+                            enemy = "w" if not self.whiteTurn else "b"
+                            if piece[0] == enemy and piece[1] in ["R", "Q"]:  # Piece able to attack the king
+                                threat = True  # Not legal e.p. if there is no blocking piece
+                            elif piece != "  ":
+                                block = True  # Anything else block the check so e.p. is legal
+
+                    if not threat or block:  # Append if threat + block or block or none
+                        moveList.append(Move((row, col), (row + 1, col - 1), self.board, isEp=True))
 
             if col < 7 and self.board[row + 1][col + 1][0] == "w":
                 if not isPinned or pinDirr == (1, 1):
                     moveList.append(Move((row, col), (row + 1, col + 1), self.board))
             elif col < 7 and self.board[row + 1][col + 1] == "  ":
                 if (row + 1, col + 1) == self.epPossible:
-                    moveList.append(Move((row, col), (row + 1, col + 1), self.board, isEp=True))
+                    if (row - 1, col + 1) == self.epPossible:  # Add the en-passant to the list of valid moves
+                        threat = block = False
+                        if kingRow == row:
+                            if kingCol < col:  # king at the pawn left
+                                insideRange = range(kingCol + 1, col)  # Between king's right side and pawn's left side
+                                outsideRange = range(col + 2,
+                                                     len(self.board[row]))  # Between enemy pawn's right side and border
+                            else:  # king at the pawn left
+                                insideRange = range(kingCol - 1, col + 1,
+                                                    -1)  # Between king's left side and pawn's right side
+                                outsideRange = range(col - 1, -1, -1)  # Between pawn's left side and king's right side
+
+                            for i in insideRange:
+                                if self.board[row][i] != "  ":  # Some other piece than both e.p. pawns blocks the check
+                                    block = True
+                            for i in outsideRange:
+                                piece = self.board[row][i]
+                                enemy = "w" if not self.whiteTurn else "b"
+                                if piece[0] == enemy and piece[1] in ["R", "Q"]:  # Piece able to attack the king
+                                    threat = True  # Not legal e.p. if there is no blocking piece
+                                elif piece != "  ":
+                                    block = True  # Anything else block the check so e.p. is legal
+
+                        if not threat or block:  # Append if threat + block or block or none
+                            moveList.append(Move((row, col), (row + 1, col + 1), self.board, isEp=True))  # Add the en-passant to the list of valid moves
 
     # Function to get rook available moves
     def getRookMoves(self, row, col, moveList):
@@ -569,7 +657,7 @@ class GameState():
 # Class to create move object
 class Move():
 
-    def __init__(self, startSq, endSq, board, isEp=False, isProm=False, isCastle=False):
+    def __init__(self, startSq, endSq, board, isEp=False, isCastle=False):
         self.startRow, self.startCol = startSq  # startSq = (row,col)
         self.endRow, self.endCol = endSq  # endSq = (row,col)
         self.pieceMoved = board[self.startRow][self.startCol]  # Piece that initialize the move
@@ -578,8 +666,7 @@ class Move():
         # print(self.moveID)
 
         # Flags for pawn promotion
-        self.isProm = self.isPromoting()
-        #self.isProm = isProm  # Flag to know if the current move is a pawn prom
+        self.isProm = self.isPromoting()    # Flag to know if the current move is a pawn prom
         self.promChoice = "Q"
 
         # Flags for en-passant moves
@@ -608,10 +695,10 @@ class Move():
 
         # Castling chess not
         if self.isCastle:
-            if self.endCol == 1:  # Queen side
-                return "0-0-0"
-            else:  # King side
+            if self.endCol == 6:  # King side
                 return "0-0"
+            else:  # Queen side
+                return "0-0-0"
 
         # En-passant chess not
         if self.isEp:
@@ -647,10 +734,7 @@ class Move():
 
     # Function to determine if the current move is a pawn promotion
     def isPromoting(self):
-        if (self.pieceMoved == "wP" and self.endRow == 0) or (self.pieceMoved == "bP" and self.endRow == 7):
-            return True
-        else:
-            return False
+        return (self.pieceMoved == "wP" and self.endRow == 0) or (self.pieceMoved == "bP" and self.endRow == 7)
 
 # --------------------------------------------------
 # Class to create right of castling object
@@ -661,3 +745,4 @@ class CastleRights():
         self.wKs = wKs
         self.bQs = bQs
         self.bKs = bKs
+
