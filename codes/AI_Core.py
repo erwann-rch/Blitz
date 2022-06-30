@@ -138,6 +138,15 @@ stalemate = 0
 
 algoDepth = 4  # Depth of the recursion
 
+# --------------------------------------------------
+# Block to make the computer-readable list of opennings
+opennings = []  # List of remaining opennings
+with open("../bookIO.txt", "r") as bookIO:
+    opens = bookIO.readlines()
+    for o in opens:
+        if "\n" in o:  # Get rid of the last CR
+            o = o[:-1]
+        opennings.append(o.split("|"))  # Making the list of opennings
 
 ############################# [ FUNCTIONS ] #############################
 # Function to write in right way the openning book
@@ -149,6 +158,7 @@ def handleBook(openBook):
             opens = book.readlines()
             for o in opens:
                 openningsList.append(o.split())
+
 
         # Write the book in computer understandable sequences
         if not os.path.isfile("../bookIO.txt"):
@@ -165,6 +175,7 @@ def handleBook(openBook):
         print("Book not found")
         exit()
 
+
 # --------------------------------------------------
 # Function to get the first random move in the opennings
 def getOpenMove():
@@ -175,15 +186,6 @@ def getOpenMove():
             opennings.append(o.split("|"))
         return eval(random.choice(opennings)[0])  # Convert str into tuple
 
-# --------------------------------------------------
-# Block to make the computer-readable list of opennings
-opennings = []  # List of remaining opennings
-with open("../bookIO.txt", "r") as bookIO:
-    opens = bookIO.readlines()
-    for o in opens:
-        if "\n" in o:  # Get rid of the last CR
-            o = o[:-1]
-        opennings.append(o.split("|"))  # Making the list of opennings
 
 # --------------------------------------------------
 # Function to determine which openning is currently played
@@ -198,7 +200,7 @@ def getRightOpen(moveLog, variants):
     lastMove = (startSq, endSq)  # Make a tuple of startSq and endSq of the last move
 
     currentIndex = len(moveLog) - 1  # Get the index to compare the right element
-    print(currentIndex)
+    #print(currentIndex)
     for opens in variants:
         if currentIndex > len(opens):
             return
@@ -238,11 +240,14 @@ def getRandomMove(validMoves):
 def getBestMove(gs, validMoves, returnQueue):
     global nextMove, counter
     nextMove = None  # Reset the previous value
-    random.shuffle(validMoves)  # Randomize list of valid moves to avoid same starter move
     counter = 0  # Counter of recursive calling  (only for debug)
+
+    validMoves = getOrderedMoves(gs, validMoves)  # Priority maker
+
     # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
     # getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
     getAlphaBetaMove(gs, validMoves, algoDepth, -checkmate, checkmate, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
+
     # print(counter)
     returnQueue.put(nextMove)  # Put the next move in the queue to travel between threads
 
@@ -298,6 +303,8 @@ def getNegaMaxMove(gs, validMoves, depth, turnID):
             return boardScore
         gs.makeMove(move)
         nextMoves = gs.getValidMoves()
+        nextMoves = getOrderedMoves(gs, nextMoves)  # Priority maker
+
         score = -getNegaMaxMove(gs, nextMoves, depth - 1, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
         if score > maxScore:  # Maximize the score
             maxScore = score
@@ -315,19 +322,12 @@ def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
     maxScore = -checkmate
 
     if depth == 0:
-        # return quiescenceSearch(gs, validMoves, alpha, beta, turnID)
-        boardScore = turnID * getBoardScore(gs)
-        return boardScore
+        return quiescenceSearch(gs, validMoves, alpha, beta)
+        # boardScore = turnID * getBoardScore(gs)
+        # return boardScore
 
     for move in validMoves:
         gs.makeMove(move, isAI=True)
-
-        # TODO move ordering
-        # Priority maker
-        # gs.protects.append((move,))
-        # gs.threats.append((move, ))
-        # gs.allowedSq.append((move, len(gs.pieceMoves[move.pieceMoved[1]])))  # Get the move and it's number of legal next moves
-
         nextMoves = gs.getValidMoves()  # Get the next possible moves and put it into the recursive call
         score = -getAlphaBetaMove(gs, nextMoves, depth - 1, -beta, -alpha, -turnID)  # Recursive call with switch turn by '-' because everything is reversed for the opponent
         if score > maxScore:  # Maximizing the score
@@ -346,8 +346,8 @@ def getAlphaBetaMove(gs, validMoves, depth, alpha, beta, turnID):
 
 # --------------------------------------------------
 # Function to make the quiescence search to limit horizon effect
-def quiescenceSearch(gs, validMoves, alpha, beta, turnID):
-    static_eval = turnID * getBoardScore(gs)
+def quiescenceSearch(gs, validMoves, alpha, beta):
+    static_eval = getBoardScore(gs)
     if static_eval >= beta:
         return beta
     if alpha < static_eval:
@@ -357,14 +357,57 @@ def quiescenceSearch(gs, validMoves, alpha, beta, turnID):
         if move.pieceCaptured != "  " or move.isProm:  # If it's a tactical move
             gs.makeMove(move, isAI=True)
             nextMoves = gs.getValidMoves()
-            score = -quiescenceSearch(gs, nextMoves, -beta, -alpha, -turnID)
+            score = -quiescenceSearch(gs, nextMoves, -beta, -alpha)
             gs.undoMove()
 
             if score >= beta:
-                return beta
+                return beta  #beta cutoff
             if score > alpha:
                 alpha = score
     return alpha
+
+# --------------------------------------------------
+# Function to sort the list of valid moves by worth (gains / losses), its power on the board
+def getOrderedMoves(gs, validMoves):
+    for move in validMoves:
+        gs.makeMove(move, isAI=True)
+        if gs.checkmate:
+            return [move]
+        gs.undoMove()
+
+    def orderer(move):
+        return moveValue(gs, move)
+
+    orderedMoveList = sorted(
+        validMoves, key=orderer, reverse=not gs.whiteTurn
+    )
+    return list(orderedMoveList)
+
+# --------------------------------------------------
+# Function to evaluate the weight of a move ==> Prom = ++ ; worthy capture ; position score
+def moveValue(gs, move):
+    if move.isProm:
+        return piecesValue[move.promChoice] if gs.whiteTurn else -piecesValue[move.promChoice]
+
+    positionScore = getBoardScore(gs)  # Get the score of the whole position
+    captureScore = 0.0
+    if move.pieceCaptured != "  " or move.isEp:
+        captureScore = evalCapture(move)  # Evaluate the worth of a capture
+
+    totalMoveValue = positionScore + captureScore  # Make a total score of the position after the move
+
+    return totalMoveValue
+
+# --------------------------------------------------
+# Function to evalute the worth of a capture
+def evalCapture(move):
+    if move.isEp:
+        return piecesValue[move.pieceMoved[1]]
+
+    pieceCapturedValue = piecesValue[move.pieceCaptured[1]]
+    pieceMovedValue = piecesValue[move.pieceMoved[1]]
+
+    return pieceCapturedValue - pieceMovedValue  # Return positive value is the capture is favorable
 
 # --------------------------------------------------
 # Function to get the current board score of the board

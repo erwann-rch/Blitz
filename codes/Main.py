@@ -145,19 +145,7 @@ def drawMoves(screen, gs):
     moveTxts = []
     for i in range(len(moveLog)):
         turn = f"{i // 2 + 1}." if i % 2 == 0 else ""  # Get the number of moves
-        # Get the good check not
-        # TODO make the log display complete
-        # if gs.checkmate:
-        #     endScore = "1-0" if not gs.whiteTurn else "0-1"  # Write the endScore
-        #     chessNot = f"{moveLog[-1].getChessNot()}# {endScore}"
-        # elif gs.inCheck:
-        #     chessNot = f"{moveLog[-1].getChessNot()}+ "
-        # elif gs.stalemate:
-        #     endScore = "1/2-1/2"
-        #     chessNot = f"{moveLog[-1].getChessNot()} {endScore}"
-        # else:
-        #     chessNot = f"{moveLog[i].getChessNot()} "
-        chessNot = f"{moveLog[i].getChessNot()} "
+        chessNot = f"{moveLog[i].getChessNot(gs)} "
         moveStr = turn + chessNot  # Build a str with both
         moveTxts.append(moveStr)
 
@@ -174,6 +162,32 @@ def drawMoves(screen, gs):
             moveX -= moveX - 5  # Remake the initial padding
             moveCounter = 0
 
+# def drawMoves(screen, gs):
+#     moveLogFont = pg.font.SysFont("Helvetica", 13, True, False)  # Set the font of the movelog text
+#     movePanel = pg.Rect(w, 0, movePanelW, movePanelH)  # Draw the panel
+#     pg.draw.rect(screen, pg.Color("black"), movePanel)
+#     moveX = moveY = 5
+#
+#     moveLog = gs.moveLog
+#     moveTxts = []
+#     for i in range(0, len(moveLog), 2):
+#         turn = f"{i // 2 + 1}." if i % 2 == 0 else ""  # Get the number of moves
+#         chessNot = f"{moveLog[i].getChessNot(gs)} "
+#         moveStr = turn + chessNot  # Build a str with both
+#         if i+1 < len(moveLog):  # Make sure to write the black move only when it plays
+#             moveStr += f"{moveLog[i+1].getChessNot(gs)} "
+#         moveTxts.append(moveStr)
+#
+#     for i in range(0, len(moveTxts), 3):  # Display only 3 moves per row
+#         txt = ""
+#         for j in range(3):
+#             if i+j < len(moveTxts):
+#                 txt += moveTxts[i+j]
+#
+#         text = moveLogFont.render(txt, True, pg.Color("white"))  # Write the text
+#         loc = movePanel.move(moveX, moveY)
+#         screen.blit(text, loc)  # Blit text into the panel
+#         moveY += text.get_height() + 2
 # --------------------------------------------------
 # Function to get the time of each clock
 # TODO clock
@@ -182,8 +196,8 @@ def drawMoves(screen, gs):
 #         mins, secs = divmod(startTime, 60)
 #         hours = mins // 60
 #         if hours > 0:
-#             mins -= hours*60
-#             if mins < 10:
+#            mins -= hours*60
+#              if mins < 10:
 #                 timer = f"{hours}:0{mins}:{secs}"
 #             else:
 #                 timer = f"{hours}:{mins}:{secs}"
@@ -257,8 +271,8 @@ def run():
     animation = False  # Flag of animation
 
     # TODO allow possibility to choose of multiplayer or not
-    p1 = True  # True if human playing white
-    p2 = True  # True if human playing black
+    p1 = False  # True if human playing white
+    p2 = False  # True if human playing black
 
     gameover = False  # Flag of end game
     openMode = True  # Flag to know when the opening mode ends

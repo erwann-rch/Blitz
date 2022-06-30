@@ -28,6 +28,8 @@ class GameState():
         # ]
 
         self.whiteTurn = True  # Define the turn
+        self.flip = False  # Flip the board if multiplayer
+        self.board = self.board[::-1] if self.flip and not self.whiteTurn else self.board
 
         self.moveLog = []  # Define the list of played moves
         self.pieceMoves = {"P": self.getPawnMoves, "R": self.getRookMoves, "N": self.getKnightMoves,
@@ -683,39 +685,51 @@ class Move():
         return False
 
     # Function to get a complete chess notation
-    def getChessNot(self):
+    def getChessNot(self, gs):
         moveCode = self.getRankFile(self.endRow, self.endCol)
 
         # Pawn promotion chess not
         if self.isProm:
             if self.pieceCaptured == "  ":  # If empty space => push
-                return moveCode + "=" + self.promChoice  # i.e : "e8=Q"
+                chessNot = moveCode + "=" + self.promChoice  # i.e : "e8=Q"
             else:  # If not empty square => capture
-                return self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode + "=" + self.promChoice  # i.e : "exd8=Q"
+                chessNot = self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode + "=" + self.promChoice  # i.e : "exd8=Q"
 
         # Castling chess not
         if self.isCastle:
             if self.endCol == 6:  # King side
-                return "0-0"
+                chessNot = "0-0"
             else:  # Queen side
-                return "0-0-0"
+                chessNot = "0-0-0"
 
         # En-passant chess not
         if self.isEp:
-            return self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode + " e.p."  # i.e : "exd6 e.p."
+            chessNot = self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode + " e.p."  # i.e : "exd6 e.p."
 
         # Normal move chess not
         if self.pieceCaptured != "  ":  # If not empty space => capture
             if self.pieceMoved[1] == "P":
-                return self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode  # i.e : "exd5"
+                chessNot = self.getRankFile(self.startRow, self.startCol)[0] + "x" + moveCode  # i.e : "exd5"
             else:
-                return self.pieceMoved[1] + "x" + moveCode  # i.e : "Nxc3"
+                chessNot = self.pieceMoved[1] + "x" + moveCode  # i.e : "Nxc3"
 
         else:  # If empty space => push
             if self.pieceMoved[1] == "P":
-                return moveCode
+                chessNot = moveCode
             else:
-                return self.pieceMoved[1] + moveCode
+                chessNot = self.pieceMoved[1] + moveCode
+
+
+        if gs.checkmate:
+            chessNot += "#"
+            chessNot += "1-0" if not gs.whiteTurn else "0-1"  # If black turn => white won
+        elif gs.stalemate:
+            chessNot += "1/2-1/2"
+        elif gs.inCheck:
+            chessNot += "+"
+
+        return chessNot
+
 
     # Function to get the right square id in chess notation
     def getRankFile(self, row, col):
