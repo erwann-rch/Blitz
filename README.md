@@ -39,7 +39,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] AI (alpha beta prunning)
 
 * Unrequired
-- [ ] Drag N Drop 
+- [x] Drag N Drop 
 - [ ] Add a clock
 - [x] Move Log display
 - [x] Add choice for the pawn promotion
@@ -48,6 +48,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
   - [ ] Select theme (brown/blue/green/gray[default])
   - [ ] Select which mode (AI VS Human[default] / Human VS Human)
     - [ ] If AI mode selected => choose what side to play (white[deault] / black / random)
+    - [ ] If AI mode selected => choose ELO of AI (300 / 600 / 900 / 1200[deault] / 1500 / 1800 / 2100 / 2400 / 2700 / 3000)
   - [ ] Select if highlight moves[default] or not
 - [ ] Local multiplayer 
 - [ ] Flip the board on each turn (only if mutliplayer)
@@ -66,7 +67,7 @@ A little help about the installation.
 ```
 $ pip install pygame
 $ git clone https://github.com/erwann-rch/Blitz/
-$ cd ../Blitz/codes
+$ cd Blitz/codes
 $ python3 Main.py
 ```
 
