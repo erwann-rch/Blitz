@@ -248,6 +248,10 @@ def draw(screen, gs, validMoves, sqSelected):
     # TODO draw clock
     # drawClock(screen, gs, clock)
 
+    # Dessiner la pièce soulevée si elle est sélectionnée
+    if draggingPiece and draggedPiece:
+        loc = pg.mouse.get_pos()
+        screen.blit(img[draggedPiece], (loc[0] - sqSize // 2, loc[1] - sqSize // 2))
 
 # --------------------------------------------------
 # Main function
@@ -271,7 +275,7 @@ def run():
     animation = False  # Flag of animation
 
     # TODO allow possibility to choose of multiplayer or not
-    p1 = False  # True if human playing white
+    p1 = True  # True if human playing white
     p2 = False  # True if human playing black
 
     gameover = False  # Flag of end game
@@ -279,6 +283,11 @@ def run():
     AIThinking = False  # Flag for the mulitporocessing when AI try to find a move
     AIMoveFinderProcess = None  # multiprocessing informations
     undoneMove = False
+
+    global draggingPiece, draggedPiece, draggedPiecePos
+    draggingPiece = False # Flag to know if the current piece is dragging
+    draggedPiece = None # Which piece is dragged
+    draggedPiecePos = None # Pos of the draggedPiece
 
     run = True
     while run:
@@ -288,7 +297,7 @@ def run():
             if event.type == pg.QUIT:  # click on the red cross
                 run = False
 
-            # Mouse handler
+            # Mouse handler - Drag & Drop
             elif event.type == pg.MOUSEBUTTONDOWN:  # mouse click
                 if not gameover:
                     loc = pg.mouse.get_pos()  # (x,y) loc of the mouse
@@ -297,26 +306,61 @@ def run():
                     if sqSelected == (row, col) or col >= 8:  # Unselect the current case if double click or click on panel
                         sqSelected = ()
                         playerClicks = []
+                        if draggedPiece and draggedPiecePos: # Put back the piece if the move is invalidated
+                            gs.board[draggedPiecePos[0]][draggedPiecePos[1]] = draggedPiece
+                            draggedPiece = None
+                            draggedPiecePos = None
                     else:
                         sqSelected = (row, col)  # Keep tracks of the click
                         playerClicks.append(sqSelected)  # Taking it as a valid click
 
-                    if len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
-                        move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
+                    if gs.board[row][col] != "  ":  # Check if clicked case is empty
+                        draggingPiece = True
+                        draggedPiece = gs.board[row][col]
+                        draggedPiecePos = (row, col)
+                        gs.board[row][col] != "  " # Erase the piece from its origin place
 
+            # End of Drag & Drop
+            elif event.type == pg.MOUSEBUTTONUP:
+                if draggingPiece:
+                    loc = pg.mouse.get_pos()  # Get the pos of the mouse to calculate the right case 
+                    col = loc[0] // sqSize
+                    row = loc[1] // sqSize
+                    if (row, col) != draggedPiecePos:  # Start the move
+                        move = Engine.Move(draggedPiecePos, (row, col), gs.board)
                         for i in range(len(validMoves)):
                             if move == validMoves[i]:
-                                # Choice of the pawn prom after the move done
-                                gs.makeMove(validMoves[i])  # Make the move
+                                gs.makeMove(validMoves[i])
                                 moveDone = True
                                 animation = True
-
-                                # Clear the click record of the turn
                                 sqSelected = ()
                                 playerClicks = []
+                                break
+                            else:
+                                gs.board[draggedPiecePos[0]][draggedPiecePos[1]] = draggedPiece # Put back the piece if the move is invalidated
+                    else:
+                        gs.board[draggedPiecePos[0]][draggedPiecePos[1]] = draggedPiece # Put back the piece if the move is invalidated
 
-                        if not moveDone:  # Fix the click wasting
-                            playerClicks = [sqSelected]  # Pop the first click and only keep the last one
+                    draggingPiece = False
+                    draggedPiece = None
+                    draggedPiecePos = None
+                    
+                elif len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
+                    move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
+
+                    for i in range(len(validMoves)):
+                        if move == validMoves[i]:
+                            # Choice of the pawn prom after the move done
+                            gs.makeMove(validMoves[i])  # Make the move
+                            moveDone = True
+                            animation = True
+
+                            # Clear the click record of the turn
+                            sqSelected = ()
+                            playerClicks = []
+
+                    if not moveDone:  # Fix the click wasting
+                        playerClicks = [sqSelected]  # Pop the first click and only keep the last one
 
             # Key handler
             elif event.type == pg.KEYDOWN:
@@ -343,6 +387,9 @@ def run():
                         AIMoveFinderProcess.terminate()
                         AIThinking = False
                     undoneMove = True
+
+        draw(screen, gs, validMoves, sqSelected)
+        pg.display.update()
 
         # AI move finder
         if not gameover and not humanTurn and not undoneMove:
