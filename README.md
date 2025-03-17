@@ -37,6 +37,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Add proper chess notation
 - [x] Highlight of selected squares / allowed moves / last opponent move
 - [x] AI (alpha beta prunning)
+- [x] multithreading
 
 * Unrequired
 - [x] Drag N Drop 
@@ -44,15 +45,18 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Move Log display
 - [x] Add choice for the pawn promotion
 - [ ] Add prettier end game text
-- [ ] Menu of preferences :
-  - [ ] Select theme (brown/blue/green/gray[default])
-  - [ ] Select which mode (AI VS Human[default] / Human VS Human)
-    - [ ] If AI mode selected => choose what side to play (white[deault] / black / random)
-    - [ ] If AI mode selected => choose ELO of AI (300 / 600 / 900 / 1200[deault] / 1500 / 1800 / 2100 / 2400 / 2700 / 3000)
-  - [ ] Select if highlight moves[default] or not
-- [ ] Local multiplayer 
+- [x] Menu of preferences :
+  - [x] Select theme (brown/blue/green/gray[default])
+  - [x] Select which mode (AI VS Human[default] / Human VS Human)
+    - [x] If AI mode selected => choose what side to play (white[deault] / black / random)
+  - [x] Select if highlight moves[default] or not
+  - [ ] ELO selector (implement function in the Engine)
+- [ ] Settings button
+- [ ] Each side score
+- [x] Local multiplayer
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
+- [ ] New game / Quit button
 - [x] Openings Lib
 
 ## Technologies
@@ -67,7 +71,7 @@ A little help about the installation.
 ```
 $ pip install pygame
 $ git clone https://github.com/erwann-rch/Blitz/
-$ cd Blitz/codes
+$ cd ../Blitz/codes
 $ python3 Main.py
 ```
 

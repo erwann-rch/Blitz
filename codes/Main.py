@@ -4,31 +4,46 @@
 
 import time
 import pygame as pg
-
 from multiprocessing import Process, Queue
-
 import AI_Core, Engine
 
 ############################# [ VARIABLES ] #############################
 
-w = h = 512  # Width  & Height of the board
+w = h = 512  # Width & Height of the board
 movePanelW = 256  # Width of the move panel
 movePanelH = h  # Height of the move panel
 d = 8  # Dimension of the board (8*8)
 sqSize = w // d
 fps = 15  # 15fps ==> need no more
 img = {}  # Dict of images
-
+icons = {}  # Dict of icons
 
 ############################# [ FUNCTIONS ] #############################
 
-# Function to load images into the board
+# Function to load piece image into the board
 # /!\ EXECUTE ONLY ONCE ==> too much RAM consumption
 def loadImg():
     pieces = ["bR", "bN", "bB", "bQ", "bK", "bP", "wR", "wN", "wB", "wQ", "wK", "wP"]  # List of every pieces
     for p in pieces:
-        img[p] = pg.transform.scale(pg.image.load(f"../images/{p}.png"), (sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
+        img[p] = pg.transform.scale(pg.image.load(f"../images/pieces/{p}.png"), (sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
 
+# --------------------------------------------------
+# Function to load icons of the game
+def loadIcons():
+    global icons
+    icons = {
+        "brown": pg.image.load("../images/icons/brown_icon.png"),
+        "blue": pg.image.load("../images/icons/blue_icon.png"),
+        "green": pg.image.load("../images/icons/green_icon.png"),
+        "gray": pg.image.load("../images/icons/gray_icon.png"),
+        "ai_vs_human": pg.image.load("../images/icons/bot.png"),
+        "human_vs_human": pg.image.load("../images/icons/human.png"),
+        "white": pg.image.load("../images/icons/bK.png"),
+        "black": pg.image.load("../images/icons/wK.png"),
+        "random": pg.image.load("../images/icons/random.png")
+    }
+    for key in icons:
+        icons[key] = pg.transform.scale(icons[key], (50, 50))
 
 # --------------------------------------------------
 # Function to animate move
@@ -53,11 +68,10 @@ def animate(move, screen, board, clock):
         if move.pieceCaptured != "  ":
             screen.blit(img[move.pieceCaptured], endSq)
 
-        # Draw the anmation
+        # Draw the animation
         screen.blit(img[move.pieceMoved], pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
         pg.display.update()  # Update the screen
         clock.tick(60)
-
 
 # --------------------------------------------------
 # Function to highlight allowed moves / selected square / last move
@@ -65,7 +79,7 @@ def highlight(screen, gs, validMoves, sqSelected):
     checkHighlight = False
 
     # Highlight the last move
-    if (len(gs.moveLog)) > 0:
+    if len(gs.moveLog) > 0:
         lastMove = gs.moveLog[-1]
         surface = pg.Surface((sqSize, sqSize))
         surface.set_alpha(100)
@@ -107,13 +121,11 @@ def highlight(screen, gs, validMoves, sqSelected):
                     screen.blit(hlMoves, (move.endCol * sqSize + sqSize / 4,
                                           move.endRow * sqSize + sqSize / 4))  # Highlight available move square
 
-
-
 # --------------------------------------------------
 # Secondary functions used to draw board, pieces and endgame text ==> separated to be more readable
 def drawBoard(screen):
     global colors
-    colors = [pg.Color("white"), pg.Color("gray")]  # List of colors used on the board
+    #colors = [pg.Color("white"), pg.Color("gray")]  # List of colors used on the board
     for row in range(d):
         for col in range(d):
             color = colors[(row + col) % 2]  # Make alternated color on the board
@@ -121,8 +133,8 @@ def drawBoard(screen):
             pg.draw.rect(screen, color, pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
             #           screen, color, rectangle object(right x value, right y value,width,height)
 
-
 # --------------------------------------------------
+# Function to drwo pieces
 def drawPieces(screen, board):
     for row in range(d):
         for col in range(d):
@@ -130,7 +142,6 @@ def drawPieces(screen, board):
             if piece != "  ":  # Not empty ones
                 # Overlay img of the piece and the board drew
                 screen.blit(img[piece], pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
-
 
 # --------------------------------------------------
 # Function to draw the move log of the game
@@ -162,71 +173,16 @@ def drawMoves(screen, gs):
             moveX -= moveX - 5  # Remake the initial padding
             moveCounter = 0
 
-# def drawMoves(screen, gs):
-#     moveLogFont = pg.font.SysFont("Helvetica", 13, True, False)  # Set the font of the movelog text
-#     movePanel = pg.Rect(w, 0, movePanelW, movePanelH)  # Draw the panel
-#     pg.draw.rect(screen, pg.Color("black"), movePanel)
-#     moveX = moveY = 5
-#
-#     moveLog = gs.moveLog
-#     moveTxts = []
-#     for i in range(0, len(moveLog), 2):
-#         turn = f"{i // 2 + 1}." if i % 2 == 0 else ""  # Get the number of moves
-#         chessNot = f"{moveLog[i].getChessNot(gs)} "
-#         moveStr = turn + chessNot  # Build a str with both
-#         if i+1 < len(moveLog):  # Make sure to write the black move only when it plays
-#             moveStr += f"{moveLog[i+1].getChessNot(gs)} "
-#         moveTxts.append(moveStr)
-#
-#     for i in range(0, len(moveTxts), 3):  # Display only 3 moves per row
-#         txt = ""
-#         for j in range(3):
-#             if i+j < len(moveTxts):
-#                 txt += moveTxts[i+j]
-#
-#         text = moveLogFont.render(txt, True, pg.Color("white"))  # Write the text
-#         loc = movePanel.move(moveX, moveY)
-#         screen.blit(text, loc)  # Blit text into the panel
-#         moveY += text.get_height() + 2
 # --------------------------------------------------
-# Function to get the time of each clock
-# TODO clock
-# def countdown(startTime):
-#     while startTime:
-#         mins, secs = divmod(startTime, 60)
-#         hours = mins // 60
-#         if hours > 0:
-#            mins -= hours*60
-#              if mins < 10:
-#                 timer = f"{hours}:0{mins}:{secs}"
-#             else:
-#                 timer = f"{hours}:{mins}:{secs}"
-#         else:
-#             if mins != 0:
-#                 if secs < 10:
-#                     timer = f"00:{mins}:0{secs}"
-#                 else:
-#                     timer = f"00:{mins}:{secs}"
-#             else:
-#                 if secs < 10:
-#                     timer = f"00:00:0{secs}"
-#                 else:
-#                     timer = f"00:00:{secs}"
-#
-#         time.sleep(1)
-#         startTime -= 1
-#         print(timer)
-#
-# countdown(random.randint(0,9999))
-
 # Function to draw the clock on each turn
 def drawClock(screen, gs):
     pass
     # wClock = clock(600)  # 10min : decrease each sec >> no sup time
     # bClock = clock(600)
 
-# --------------------------------------------------
 # TODO make end text with king img instead of color name
+# --------------------------------------------------
+# Function to draw the endgame text
 def drawEndGameText(screen, text):
     font = pg.font.SysFont("Helvetica", 30, True, False)  # Set the font of the text
     txt = font.render(text, False, pg.Color("gray"))  # Write the text
@@ -237,12 +193,12 @@ def drawEndGameText(screen, text):
     loc = pg.Rect(0, 0, w, h).move(w / 2 - txt.get_width() / 2 + 2, h / 2 - txt.get_height() / 2 + 2)
     screen.blit(txt, loc)  # Principal text
 
-
 # --------------------------------------------------
 # Draw function used to draw the complete game
-def draw(screen, gs, validMoves, sqSelected):
+def draw(screen, gs, validMoves, sqSelected, highlightMoves=True):
     drawBoard(screen)
-    highlight(screen, gs, validMoves, sqSelected)
+    if highlightMoves:
+        highlight(screen, gs, validMoves, sqSelected)
     drawPieces(screen, gs.board)
     drawMoves(screen, gs)
     # TODO draw clock
@@ -254,18 +210,142 @@ def draw(screen, gs, validMoves, sqSelected):
         screen.blit(img[draggedPiece], (loc[0] - sqSize // 2, loc[1] - sqSize // 2))
 
 # --------------------------------------------------
+# Draw preference menu
+def showPreferencesMenu(screen):
+    global icons
+    font = pg.font.SysFont("Helvetica", 24)
+    menu_items = [ # Check states of options
+        {"text": "Select theme", "options": ["brown", "blue", "green", "gray"], "selected": "gray", "clicked": False},
+        {"text": "Highlight moves", "options": [True, False], "selected": True, "clicked": False},
+        {"text": "Select mode", "options": ["AI VS Human", "Human VS Human"], "selected": "AI VS Human", "clicked": False},
+        {"text": "Choose side (if AI mode)", "options": ["white", "black", "random"], "selected": "white", "clicked": False,"hidden": False}, #,"hidden": False
+        {"text": "AI Strength (ELO)", "options": list(range(300, 3001, 300)), "selected": 1200, "clicked": False,"hidden": False} #,"hidden": False
+    ]
+
+    running = True
+    while running:
+        screen.fill(pg.Color("white"))
+        y_offset = 25
+
+        for item in menu_items:
+            # Hide "hidden" item in case Human VS Human is selected
+            if "hidden" in item and item["hidden"]:
+                continue
+
+            text = font.render(item["text"], True, pg.Color("black"))
+            screen.blit(text, (50, y_offset))
+
+            y_offset += 40 # Stating pos of icons
+            x_offset = 150
+
+            if item["text"] == "Highlight moves":
+                # Draw a switch "Highlight moves"
+                switch_x, switch_y = x_offset, y_offset
+                switch_width, switch_height = 60, 30
+                switch_color = pg.Color("green") if item["selected"] else pg.Color("red") # color of the switch
+                circle_x = switch_x + (switch_width - 20) if item["selected"] else switch_x + 5 # pos of the swtch
+
+                pg.draw.rect(screen, switch_color, (switch_x, switch_y, switch_width, switch_height), border_radius=15)  # Draw the switch
+                pg.draw.circle(screen, pg.Color("white"), (circle_x + 10, switch_y + switch_height // 2), 12)  # Draw the white circle
+
+            elif item["text"] == "AI Strength (ELO)":
+                # Draw slider for AI strength
+                slider_x, slider_y = x_offset, y_offset + 10
+                slider_width = 200
+                pg.draw.line(screen, pg.Color("black"), (slider_x, slider_y), (slider_x + slider_width, slider_y), 4)
+                knob_x = slider_x + (item["selected"] - 300) / (3000 - 300) * slider_width
+                pg.draw.circle(screen, pg.Color("red"), (int(knob_x), slider_y), 10)
+                elo_text = font.render(str(item["selected"]), True, pg.Color("black"))
+                screen.blit(elo_text, (slider_x + slider_width + 20, slider_y - 10))
+
+            else:
+                # Draw icons for other options
+                for option in item["options"]:
+                    icon_key = str(option).replace(" ", "_").lower()
+                    icon = icons.get(icon_key, None)
+
+                    if icon:
+                        screen.blit(icon, (x_offset, y_offset))  # Draw icon
+                    else:
+                        text = font.render(str(option), True, pg.Color("black")) # Write option name if icon isn't found
+                        screen.blit(text, (x_offset + 10, y_offset + 15))
+
+                    if item["selected"] == option:
+                        pg.draw.rect(screen, pg.Color("red"), (x_offset, y_offset, 50, 50), 2)  # Red square to select
+
+                    x_offset += 70  # Padding of icons
+
+            y_offset += 60  # Padding of params
+
+        # Event Handling
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                y_offset = 25 # offset of the hitboxes
+
+                for item in menu_items:
+                    y_offset += 40
+                    x_offset = 150
+
+                    if item["text"] == "Highlight moves":
+                        switch_x, switch_y = x_offset, y_offset
+                        switch_width, switch_height = 60, 30
+
+                        if switch_x < x < switch_x + switch_width and switch_y < y < switch_y + switch_height:
+                            item["selected"] = not item["selected"]  # Toggle switch
+
+                    elif item["text"] == "AI Strength (ELO)":
+                        # Click on slider
+                        slider_x, slider_y = x_offset, y_offset + 10
+                        slider_width = 200
+                        if slider_x <= x <= slider_x + slider_width and slider_y - 10 <= y <= slider_y + 10:
+                            new_elo = round(((x - slider_x) / slider_width) * (3000 - 300) + 300)
+                            item["selected"] = min(max(new_elo, 300), 3000)  # Clamp value between 300 and 3000
+
+                    else:
+                        for option in item["options"]:
+                            if x_offset < x < x_offset + 50 and y_offset < y < y_offset + 50:
+                                item["selected"] = option
+
+                                # TODO : Hide ELO and side selection if Human vs Human is selected
+                                if item["text"] == "Select mode":
+                                    human_vs_human = (option == "Human VS Human")
+                                    for other_item in menu_items:
+                                        if other_item["text"] in ["AI Strength (ELO)", "Choose side (if AI mode)"]:
+                                            other_item["hidden"] = human_vs_human
+
+                            x_offset += 70
+                    y_offset += 60
+
+            # Enter to quit menu
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_RETURN:
+                    running = False
+
+        pg.display.update()
+
+    # Convert AI ELO to depth
+    ai_depth = menu_items[-1]["selected"] // 300 if not menu_items[-1].get("hidden", False) else None
+
+    return {item["text"]: item["selected"] for item in menu_items}, ai_depth
+
+# --------------------------------------------------
 # Main function
 def run():
     pg.init()  # Initialize the pygame object
     screen = pg.display.set_mode((w + movePanelW, h))  # Define the size of the window
     pg.display.set_caption("Blitz")  # Set the title
-    pg.display.set_icon(pg.image.load('../images/Blitz_logo.png'))  # Set the icon
+    pg.display.set_icon(pg.image.load('../images/icons/Blitz_logo.png'))  # Set the icon
     screen.fill(pg.Color("white"))  # Make a white window (easier to see modifcations)
 
     clock = pg.time.Clock()  # Create an object to handles fps
 
     gs = Engine.GameState()  # Initialize the game
     loadImg()  # and images
+    loadIcons()  # and icons
+
     validMoves = gs.getValidMoves()  # Get all valid moves
 
     sqSelected = ()  # (col,row) ==> last click
@@ -274,15 +354,45 @@ def run():
     moveDone = False  # Flag of move
     animation = False  # Flag of animation
 
-    # TODO allow possibility to choose of multiplayer or not
-    p1 = True  # True if human playing white
-    p2 = False  # True if human playing black
-
     gameover = False  # Flag of end game
     openMode = True  # Flag to know when the opening mode ends
     AIThinking = False  # Flag for the mulitporocessing when AI try to find a move
     AIMoveFinderProcess = None  # multiprocessing informations
     undoneMove = False
+
+    # Calling Preference Menu
+    preferences, ai_depth = showPreferencesMenu(screen)
+    print(preferences)
+    theme = preferences["Select theme"]
+    mode = preferences["Select mode"]
+    side = preferences["Choose side (if AI mode)"]
+    highlightMoves = preferences["Highlight moves"]
+
+    # Apply colors
+    global colors
+    if theme == "brown":
+        colors = [pg.Color("burlywood"), pg.Color("saddlebrown")]
+    elif theme == "blue":
+        colors = [pg.Color("lightblue"), pg.Color("darkblue")]
+    elif theme == "green":
+        colors = [pg.Color("lightgreen"), pg.Color("darkgreen")]
+    else:  # gray
+        colors = [pg.Color("white"), pg.Color("gray")]
+
+    # Set playing mode
+    if mode == "Human VS Human":
+        p1 = True
+        p2 = True
+    else:  # AI VS Human
+        if side == "white":
+            p1 = False
+            p2 = True
+        elif side == "black":
+            p1 = True
+            p2 = False
+        else:  # random
+            import random
+            p1, p2 = random.choice([(False, True), (True, False)])
 
     global draggingPiece, draggedPiece, draggedPiecePos
     draggingPiece = False # Flag to know if the current piece is dragging
@@ -323,7 +433,7 @@ def run():
             # End of Drag & Drop
             elif event.type == pg.MOUSEBUTTONUP:
                 if draggingPiece:
-                    loc = pg.mouse.get_pos()  # Get the pos of the mouse to calculate the right case 
+                    loc = pg.mouse.get_pos()  # Get the pos of the mouse to calculate the right case
                     col = loc[0] // sqSize
                     row = loc[1] // sqSize
                     if (row, col) != draggedPiecePos:  # Start the move
@@ -344,7 +454,7 @@ def run():
                     draggingPiece = False
                     draggedPiece = None
                     draggedPiecePos = None
-                    
+
                 elif len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
                     move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
 
@@ -388,9 +498,6 @@ def run():
                         AIThinking = False
                     undoneMove = True
 
-        draw(screen, gs, validMoves, sqSelected)
-        pg.display.update()
-
         # AI move finder
         if not gameover and not humanTurn and not undoneMove:
             AI_Core.handleBook("../book.txt")  # Create an engine-readable openning book from a human-readable book
@@ -415,7 +522,6 @@ def run():
                 if not AIMoveFinderProcess.is_alive():  # Check if the process been killed
                     AIMove = returnQueue.get()  # Get the move mode by the AI in the parallel thread
 
-
                 if AIMove is None:  # AI Give up  => ending in any case into checkmate or stalemate
                     AIMove = AI_Core.getRandomMove(validMoves)  # Play a random move if none are good
                 AIThinking = False
@@ -425,26 +531,15 @@ def run():
             animation = True
 
         if moveDone:  # Generate a new set of valid moves only if a move is made
-            # print(gs.currentCastles.wQs, gs.currentCastles.wKs, gs.currentCastles.bQs, gs.currentCastles.bKs)
-            # print(gs.castlesLog)
             if animation:
                 animate(gs.moveLog[-1], screen, gs.board, clock)
                 animation = False
             validMoves = gs.getValidMoves()
-            # print(len(validMoves))
-
-            # if len(gs.moveLog) > 0:
-            #     if gs.checkmate:
-            #             print(gs.moveLog[-1].getChessNot() + "#")
-            #         elif gs.inCheck:
-            #             print(gs.moveLog[-1].getChessNot() + "+")
-            #         else:
-            #             print(gs.moveLog[-1].getChessNot())
 
             moveDone = False  # Reset the flags
             undoneMove = False
 
-        draw(screen, gs, validMoves, sqSelected)  # Draw the whole game
+        draw(screen, gs, validMoves, sqSelected, highlightMoves)  # Draw the whole game
 
         # Write the end game
         if gs.checkmate or gs.stalemate:
@@ -456,19 +551,12 @@ def run():
 
             drawEndGameText(screen, txt)
 
-        # Flip the board when both players are human
-        # if p1 and p2:
-        #     gs.flip = True
-
         clock.tick(fps)  # Makes the clock ticking at fps frames rate
         pg.display.update()  # Update the board at every tick
-        # if not humanTurn:  # Slow the speed of the game
-        #    time.sleep(1)
 
     time.sleep(0.045)
     time.sleep(0.052)
     pg.quit()
-
 
 ############################# [ LAUNCH ] #############################
 
