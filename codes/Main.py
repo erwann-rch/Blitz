@@ -2,7 +2,7 @@
 # Main file ~ Handles user input & displays GameState object
 ############################# [ IMPORTS ] #############################
 
-import time
+import time, os
 import pygame as pg
 from multiprocessing import Process, Queue
 import AI_Core, Engine
@@ -17,33 +17,38 @@ sqSize = w // d
 fps = 15  # 15fps ==> need no more
 img = {}  # Dict of images
 icons = {}  # Dict of icons
+filePath = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # file path of the script
 
 ############################# [ FUNCTIONS ] #############################
 
 # Function to load piece image into the board
 # /!\ EXECUTE ONLY ONCE ==> too much RAM consumption
 def loadImg():
+    piecesBasePath = os.path.join(filePath, "images", "pieces")
     pieces = ["bR", "bN", "bB", "bQ", "bK", "bP", "wR", "wN", "wB", "wQ", "wK", "wP"]  # List of every pieces
     for p in pieces:
-        img[p] = pg.transform.scale(pg.image.load(f"../images/pieces/{p}.png"), (sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
+        img[p] = pg.transform.scale(pg.image.load(os.path.join(piecesBasePath,f"{p}.png")), (sqSize, sqSize))  # Load each imgs with the pygame object and put it int the right size
 
 # --------------------------------------------------
 # Function to load icons of the game
 def loadIcons():
     global icons
-    icons = {
-        "brown": pg.image.load("../images/icons/brown_icon.png"),
-        "blue": pg.image.load("../images/icons/blue_icon.png"),
-        "green": pg.image.load("../images/icons/green_icon.png"),
-        "gray": pg.image.load("../images/icons/gray_icon.png"),
-        "ai_vs_human": pg.image.load("../images/icons/bot.png"),
-        "human_vs_human": pg.image.load("../images/icons/human.png"),
-        "white": pg.image.load("../images/icons/bK.png"),
-        "black": pg.image.load("../images/icons/wK.png"),
-        "random": pg.image.load("../images/icons/random.png")
+    iconsBasePath = os.path.join(filePath, "images", "icons")
+    iconsFiles = {
+        "brown": "brown_icon.png",
+        "blue": "blue_icon.png",
+        "green": "green_icon.png",
+        "gray": "gray_icon.png",
+        "ai_vs_human": "bot.png",
+        "human_vs_human": "human.png",
+        "white": "bK.png",
+        "black": "wK.png",
+        "random": "random.png"
     }
-    for key in icons:
-        icons[key] = pg.transform.scale(icons[key], (50, 50))
+    
+    for key, file_name in iconsFiles.items():
+        icon_path = os.path.join(iconsBasePath, file_name)
+        icons[key] = pg.transform.scale(pg.image.load(icon_path), (50, 50))
 
 # --------------------------------------------------
 # Function to animate move
@@ -69,8 +74,13 @@ def animate(move, screen, board, clock):
             screen.blit(img[move.pieceCaptured], endSq)
 
         # Draw the animation
+        # if move.pieceMoved in img:
+        #     screen.blit(img[move.pieceMoved], pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
+        # else:
+        #     print(f"Warning: Piece '{move.pieceMoved}' not found in img dictionary.")
         screen.blit(img[move.pieceMoved], pg.Rect(col * sqSize, row * sqSize, sqSize, sqSize))
-        pg.display.update()  # Update the screen
+        pg.display.flip()
+        #pg.display.update()  # Update the screen
         clock.tick(60)
 
 # --------------------------------------------------
@@ -156,7 +166,10 @@ def drawMoves(screen, gs):
     moveTxts = []
     for i in range(len(moveLog)):
         turn = f"{i // 2 + 1}." if i % 2 == 0 else ""  # Get the number of moves
-        chessNot = f"{moveLog[i].getChessNot(gs)} "
+        isLastMove = (i == len(moveLog) - 1)
+        chessNot = f"{moveLog[i].getChessNot(gs, isLastMove)} "
+        # chessNot = f"{moveLog[i].getChessNot(gs)} "
+        #print(f"Move notation: {chessNot}")
         moveStr = turn + chessNot  # Build a str with both
         moveTxts.append(moveStr)
 
@@ -218,8 +231,8 @@ def showPreferencesMenu(screen):
         {"text": "Select theme", "options": ["brown", "blue", "green", "gray"], "selected": "gray", "clicked": False},
         {"text": "Highlight moves", "options": [True, False], "selected": True, "clicked": False},
         {"text": "Select mode", "options": ["AI VS Human", "Human VS Human"], "selected": "AI VS Human", "clicked": False},
-        {"text": "Choose side (if AI mode)", "options": ["white", "black", "random"], "selected": "white", "clicked": False,"hidden": False}, #,"hidden": False
-        {"text": "AI Strength (ELO)", "options": list(range(300, 3001, 300)), "selected": 1200, "clicked": False,"hidden": False} #,"hidden": False
+        {"text": "Choose side (if AI mode)", "options": ["white", "black", "random"], "selected": "white", "clicked": False,"hidden": False},
+        {"text": "AI Strength (ELO)", "options": list(range(300, 3001, 300)), "selected": 1200, "clicked": False,"hidden": False}
     ]
 
     running = True
@@ -248,14 +261,34 @@ def showPreferencesMenu(screen):
                 pg.draw.rect(screen, switch_color, (switch_x, switch_y, switch_width, switch_height), border_radius=15)  # Draw the switch
                 pg.draw.circle(screen, pg.Color("white"), (circle_x + 10, switch_y + switch_height // 2), 12)  # Draw the white circle
 
+            # elif item["text"] == "AI Strength (ELO)":
+            #     # Draw slider for AI strength
+            #     slider_x, slider_y = x_offset, y_offset + 10
+            #     slider_width = 200
+            #     pg.draw.line(screen, pg.Color("black"), (slider_x, slider_y), (slider_x + slider_width, slider_y), 4)
+            #     knob_x = slider_x + (item["selected"] - 300) / (3000 - 300) * slider_width
+            #     pg.draw.circle(screen, pg.Color("red"), (int(knob_x), slider_y), 10)
+            #     elo_text = font.render(str(item["selected"]), True, pg.Color("black"))
+            #     screen.blit(elo_text, (slider_x + slider_width + 20, slider_y - 10))
+            
             elif item["text"] == "AI Strength (ELO)":
                 # Draw slider for AI strength
                 slider_x, slider_y = x_offset, y_offset + 10
                 slider_width = 200
                 pg.draw.line(screen, pg.Color("black"), (slider_x, slider_y), (slider_x + slider_width, slider_y), 4)
-                knob_x = slider_x + (item["selected"] - 300) / (3000 - 300) * slider_width
+
+                # Calculate the nearest multiple of 300
+                min_elo = 300
+                max_elo = 3000
+                step = 300
+                selected_elo = min(((item["selected"] - min_elo) // step) * step + min_elo, max_elo)
+
+                # Calculate knob position based on the selected ELO
+                knob_x = slider_x + (selected_elo - min_elo) / (max_elo - min_elo) * slider_width
                 pg.draw.circle(screen, pg.Color("red"), (int(knob_x), slider_y), 10)
-                elo_text = font.render(str(item["selected"]), True, pg.Color("black"))
+
+                # Display the selected ELO value
+                elo_text = font.render(str(selected_elo), True, pg.Color("black"))
                 screen.blit(elo_text, (slider_x + slider_width + 20, slider_y - 10))
 
             else:
@@ -332,12 +365,45 @@ def showPreferencesMenu(screen):
     return {item["text"]: item["selected"] for item in menu_items}, ai_depth
 
 # --------------------------------------------------
+# Fonction pour afficher le menu de promotion
+def showPromotionMenu(screen, move):
+    # which color is promoting
+    color = "w" if move.pieceMoved[0] == "w" else "b"
+
+    # List of promoting pieces and images
+    promotingPieces = [f"{color}Q", f"{color}R", f"{color}B", f"{color}N"]
+    promotingImages = [pg.transform.scale(img[piece], (sqSize, sqSize)) for piece in promotingPieces]
+
+    # Draw interface
+    while True:
+        screen.fill(pg.Color("gray"))
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                exit()
+            elif event.type == pg.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                for i, rect in enumerate(promotion_rects):
+                    if rect.collidepoint(x, y):
+                        move.promChoice = promotingPieces[i][1]  # Define prom choice
+                        return
+
+        # Draw promoting piece
+        promotion_rects = []
+        for i, image in enumerate(promotingImages):
+            rect = pg.Rect(w // 2 - sqSize * 1.5 + i * sqSize, h // 2 - sqSize // 2, sqSize, sqSize)
+            screen.blit(image, rect)
+            promotion_rects.append(rect)
+
+        pg.display.flip()
+
+# --------------------------------------------------
 # Main function
 def run():
     pg.init()  # Initialize the pygame object
     screen = pg.display.set_mode((w + movePanelW, h))  # Define the size of the window
     pg.display.set_caption("Blitz")  # Set the title
-    pg.display.set_icon(pg.image.load('../images/icons/Blitz_logo.png'))  # Set the icon
+    pg.display.set_icon(pg.image.load(os.path.join(filePath, "images", "icons","Blitz_logo.png")))  # Set the icon
     screen.fill(pg.Color("white"))  # Make a white window (easier to see modifcations)
 
     clock = pg.time.Clock()  # Create an object to handles fps
@@ -362,7 +428,6 @@ def run():
 
     # Calling Preference Menu
     preferences, ai_depth = showPreferencesMenu(screen)
-    print(preferences)
     theme = preferences["Select theme"]
     mode = preferences["Select mode"]
     side = preferences["Choose side (if AI mode)"]
@@ -428,7 +493,8 @@ def run():
                         draggingPiece = True
                         draggedPiece = gs.board[row][col]
                         draggedPiecePos = (row, col)
-                        gs.board[row][col] != "  " # Erase the piece from its origin place
+                        gs.board[row][col] = "  " # Erase the piece from its origin place
+                        # gs.board[row][col] != "  " # Erase the piece from its origin place
 
             # End of Drag & Drop
             elif event.type == pg.MOUSEBUTTONUP:
@@ -440,6 +506,8 @@ def run():
                         move = Engine.Move(draggedPiecePos, (row, col), gs.board)
                         for i in range(len(validMoves)):
                             if move == validMoves[i]:
+                                if move.isProm:
+                                    showPromotionMenu(screen, move)
                                 gs.makeMove(validMoves[i])
                                 moveDone = True
                                 animation = True
@@ -455,13 +523,16 @@ def run():
                     draggedPiece = None
                     draggedPiecePos = None
 
-                elif len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
+                if len(playerClicks) == 2 and humanTurn:  # 2 clicks ==> move a piece from a case to an other one
                     move = Engine.Move(playerClicks[0], playerClicks[1], gs.board)  # Create a move object
 
                     for i in range(len(validMoves)):
                         if move == validMoves[i]:
+                            if move.isProm:
+                                showPromotionMenu(screen, move)
+                            
                             # Choice of the pawn prom after the move done
-                            gs.makeMove(validMoves[i])  # Make the move
+                            gs.makeMove(move)  # Make the move
                             moveDone = True
                             animation = True
 
@@ -500,7 +571,7 @@ def run():
 
         # AI move finder
         if not gameover and not humanTurn and not undoneMove:
-            AI_Core.handleBook("../book.txt")  # Create an engine-readable openning book from a human-readable book
+            AI_Core.handleBook(os.path.join(filePath, "book.txt"))  # Create an engine-readable openning book from a human-readable book
             AIMove = None
             if openMode:
                 AIChoice = AI_Core.getOpenMove() if len(gs.moveLog) == 0 else AI_Core.getRightOpen(gs.moveLog, AI_Core.opennings)
@@ -526,7 +597,7 @@ def run():
                     AIMove = AI_Core.getRandomMove(validMoves)  # Play a random move if none are good
                 AIThinking = False
 
-            gs.makeMove(AIMove, isAI=True)  # Make the move
+            gs.makeMove(AIMove)  # Make the move
             moveDone = True
             animation = True
 

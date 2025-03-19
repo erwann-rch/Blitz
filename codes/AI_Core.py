@@ -186,13 +186,40 @@ def getOpenMove():
             opennings.append(o.split("|"))
         return eval(random.choice(opennings)[0])  # Convert str into tuple
 
-
 # --------------------------------------------------
 # Function to determine which openning is currently played
+# def getRightOpen(moveLog, variants):
+#     global opennings
+#     #print("left :" + str(len(variants)))
+#     tmpVariants = []
+
+#     lastMove = moveLog[-1]  # Get the last move in the moveLog
+#     startSq = (lastMove.startRow, lastMove.startCol)
+#     endSq = (lastMove.endRow, lastMove.endCol)
+#     lastMove = (startSq, endSq)  # Make a tuple of startSq and endSq of the last move
+
+#     currentIndex = len(moveLog) - 1  # Get the index to compare the right element
+#     #print(currentIndex)
+#     for opens in variants:
+#         if currentIndex > len(opens):
+#             return
+#         #print("opens "+str(len(opens)))
+#         move = eval(opens[currentIndex])  # Convert the str to tuple
+#         if lastMove == move:
+#             tmpVariants.append(opens)  # Append the whole openning to the list of variants
+
+#     opennings = tmpVariants  # Set the new list of remaining openings
+
+#     if currentIndex < len(opennings):
+#         return eval(random.choice(opennings)[currentIndex+1])  # Convert str into tuple
+#     else:
+#         return
 def getRightOpen(moveLog, variants):
     global opennings
-    #print("left :" + str(len(variants)))
     tmpVariants = []
+
+    if not moveLog:
+        return
 
     lastMove = moveLog[-1]  # Get the last move in the moveLog
     startSq = (lastMove.startRow, lastMove.startCol)
@@ -200,22 +227,23 @@ def getRightOpen(moveLog, variants):
     lastMove = (startSq, endSq)  # Make a tuple of startSq and endSq of the last move
 
     currentIndex = len(moveLog) - 1  # Get the index to compare the right element
-    #print(currentIndex)
+    # print(f"currentIndex: {currentIndex}")
+
     for opens in variants:
-        if currentIndex > len(opens):
-            return
-        #print("opens "+str(len(opens)))
+        # print(f"opens: {opens}, len(opens): {len(opens)}")
+        if currentIndex >= len(opens):
+            continue
         move = eval(opens[currentIndex])  # Convert the str to tuple
         if lastMove == move:
-            tmpVariants.append(opens)  # Append the whole openning to the list of variants
+            tmpVariants.append(opens)  # Append the whole opening to the list of variants
 
     opennings = tmpVariants  # Set the new list of remaining openings
+    # print(f"opennings: {opennings}, len(opennings): {len(opennings)}")
 
-    if currentIndex < len(opennings):
-        return eval(random.choice(opennings)[currentIndex+1])  # Convert str into tuple
+    if currentIndex + 1 < len(opennings):
+        return eval(random.choice(opennings)[currentIndex + 1])  # Convert str into tuple
     else:
         return
-
 # --------------------------------------------------
 # Function to translate human-readable moves into computer-readable moves
 def getRowCol(squares):
@@ -250,6 +278,21 @@ def getBestMove(gs, validMoves, returnQueue):
 
     # print(counter)
     returnQueue.put(nextMove)  # Put the next move in the queue to travel between threads
+
+#TODO : Set the working AlgoDepth
+# def getBestMove(gs, validMoves, algoDepth, returnQueue):
+#     global nextMove, counter
+#     nextMove = None  # Reset the previous value
+#     counter = 0  # Counter of recursive calling  (only for debug)
+
+#     validMoves = getOrderedMoves(gs, validMoves)  # Priority maker
+
+#     # getMinMaxMove(gs, validMoves, algoDepth, gs.whiteTurn)  # MinMax algorithm chosen
+#     # getNegaMaxMove(gs, validMoves, algoDepth, 1 if gs.whiteTurn else -1)  # NegaMax algorithm chosen
+#     getAlphaBetaMove(gs, validMoves, algoDepth, -checkmate, checkmate, 1 if gs.whiteTurn else -1)  # AlphaBeta-pruning algorithm chosen
+
+#     # print(counter)
+#     returnQueue.put(nextMove)  # Put the next move in the queue to travel between threads
 
 # --------------------------------------------------
 # Function to determine the best move with MinMax recursive algorithm

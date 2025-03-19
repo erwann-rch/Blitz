@@ -38,6 +38,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Highlight of selected squares / allowed moves / last opponent move
 - [x] AI (alpha beta prunning)
 - [x] multithreading
+- [x] promoting menu
 
 * Unrequired
 - [x] Drag N Drop 
@@ -56,7 +57,7 @@ Moreover, I enjoyed merging two of my passions: chess and programming. Hope you 
 - [x] Local multiplayer
 - [ ] Flip the board on each turn (only if mutliplayer)
 - [ ] Generate .pgn file
-- [ ] New game / Quit button
+- [ ] New game / Quit button (different from Esc)
 - [x] Openings Lib
 
 ## Technologies
@@ -71,8 +72,7 @@ A little help about the installation.
 ```
 $ pip install pygame
 $ git clone https://github.com/erwann-rch/Blitz/
-$ cd ../Blitz/codes
-$ python3 Main.py
+$ python3 Blitz/codes/Main.py
 ```
 
 ## Usage
